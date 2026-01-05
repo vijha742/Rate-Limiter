@@ -1,6 +1,6 @@
 package com.vikas.rate_limiter.filter;
 
-import com.vikas.rate_limiter.algorithm.TokenBucketRateLimitAlgorithm;
+import com.vikas.rate_limiter.algorithm.LeakyBucketRateLimitAlgorithm;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,7 +18,7 @@ import java.io.PrintWriter;
 @Component
 @RequiredArgsConstructor
 public class RateFilter extends OncePerRequestFilter {
-    private final TokenBucketRateLimitAlgorithm algo;
+    private final LeakyBucketRateLimitAlgorithm algo;
 
     // this.algo = new FixedCounterRateLimitAlgorithm(10, 5);
     // this.algo = new SlidingWindowRateLimitAlgorithm(10, 5);
