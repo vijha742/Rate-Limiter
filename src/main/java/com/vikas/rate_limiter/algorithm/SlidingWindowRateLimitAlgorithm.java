@@ -20,12 +20,14 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
         for (long val : req_storage.keySet()) {
             if (val >= start_window) {
                 req_count += this.req_storage.get(val);
+            } else if (val < start_window - 5000) {
+                this.req_storage.remove(val);
             }
         }
+
         if (req_count < this.max_requests) {
             this.req_storage.put(current_time, this.req_storage.getOrDefault(current_time, 0) + 1);
             return true;
-
         } else return false;
     }
 }
