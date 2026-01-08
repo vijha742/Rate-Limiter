@@ -1,6 +1,8 @@
 package com.vikas.rate_limiter.filter;
 
-import com.vikas.rate_limiter.algorithm.LeakyBucketRateLimitAlgorithm;
+import com.vikas.rate_limiter.RateLimitManager;
+import com.vikas.rate_limiter.algorithm.RateLimitAlgorithm;
+import com.vikas.rate_limiter.utils.IpUtil;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -18,20 +20,18 @@ import java.io.PrintWriter;
 @Component
 @RequiredArgsConstructor
 public class RateFilter extends OncePerRequestFilter {
-    private final LeakyBucketRateLimitAlgorithm algo;
-
-    // this.algo = new FixedCounterRateLimitAlgorithm(10, 5);
-    // this.algo = new SlidingWindowRateLimitAlgorithm(10, 5);
-    // this.algo = new TokenBucketRateLimitAlgorithm(2, 10);
+    private final RateLimitManager manager;
 
     @Override
     protected void doFilterInternal(
             HttpServletRequest req, HttpServletResponse res, FilterChain filterChain)
             throws ServletException, IOException {
-        if (this.algo.acceptRequest()) {
+        String ip = IpUtil.getUserIp(req);
+        RateLimitAlgorithm algo = manager.getAlgoWithIp(ip);
+        if (algo.acceptRequest()) {
             filterChain.doFilter(req, res);
         } else {
-            res.setStatus(HttpServletResponse.SC_REQUEST_TIMEOUT);
+            res.setStatus(429);
             res.setContentType("text/plain");
             PrintWriter writer = res.getWriter();
             writer.write("All requests have been exhausted. Try again later!!!");
