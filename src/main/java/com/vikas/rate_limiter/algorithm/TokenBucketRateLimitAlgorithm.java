@@ -14,14 +14,14 @@ import org.springframework.stereotype.Component;
 // But the question is why it wasn't happening for FixedCoubnter and sliding
 // window algorithm...They
 // were working as usual...
-@Component
 @Data
+@Component
 public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
-    private final int request_fill_rate = 2;
+    private final int request_fill_rate;
     private long start_time = System.currentTimeMillis();
-    private final int max_capacity = 10;
-    private int tokens_in_bucket = 0;
+    private final int max_capacity;
+    private int tokens_in_bucket = 0; // WARN: Why is this wrong and what can we do to set t up
     private long last_request_time = System.currentTimeMillis();
 
     @Override
@@ -35,7 +35,6 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
         if (this.tokens_in_bucket > 0) {
             this.tokens_in_bucket -= 1;
-            setLast_request_time(current_time);
             return true;
         } else
             return false;

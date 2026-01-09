@@ -8,9 +8,9 @@ import org.springframework.stereotype.Component;
 @Data
 public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
-        private int process_rate = 2;
+        private final int process_rate;
         private int counter = 0;
-        private int max_requests = 10;
+        private final int max_requests;
         private long last_update_time = System.currentTimeMillis();
 
         public synchronized boolean acceptRequest() {

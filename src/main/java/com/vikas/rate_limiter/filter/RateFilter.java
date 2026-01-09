@@ -1,7 +1,6 @@
 package com.vikas.rate_limiter.filter;
 
 import com.vikas.rate_limiter.RateLimitManager;
-import com.vikas.rate_limiter.algorithm.RateLimitAlgorithm;
 import com.vikas.rate_limiter.utils.IpUtil;
 
 import jakarta.servlet.FilterChain;
@@ -27,8 +26,7 @@ public class RateFilter extends OncePerRequestFilter {
             HttpServletRequest req, HttpServletResponse res, FilterChain filterChain)
             throws ServletException, IOException {
         String ip = IpUtil.getUserIp(req);
-        RateLimitAlgorithm algo = manager.getAlgoWithIp(ip);
-        if (algo.acceptRequest()) {
+        if (manager.allowRequest(ip)) {
             filterChain.doFilter(req, res);
         } else {
             res.setStatus(429);
