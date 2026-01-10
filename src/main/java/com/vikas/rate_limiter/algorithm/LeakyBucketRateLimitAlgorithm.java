@@ -2,9 +2,6 @@ package com.vikas.rate_limiter.algorithm;
 
 import lombok.Data;
 
-import org.springframework.stereotype.Component;
-
-@Component
 @Data
 public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 

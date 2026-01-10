@@ -1,7 +1,9 @@
 package com.vikas.rate_limiter.algorithm;
 
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Data
 public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
     private int counter;
@@ -23,11 +25,11 @@ public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
             window_start = currentTime;
             counter = 1;
             return true;
+        } else {
+            if (counter < maxRequests) {
+                counter++;
+                return true;
+            } else return false;
         }
-        if (counter < maxRequests) {
-            counter++;
-            return true;
-        }
-        return false;
     }
 }

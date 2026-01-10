@@ -1,12 +1,10 @@
 package com.vikas.rate_limiter.algorithm;
 
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-@RequiredArgsConstructor
 @Data
 public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
     private final int max_requests;
@@ -28,6 +26,7 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
         if (req_count < this.max_requests) {
             this.req_storage.put(current_time, this.req_storage.getOrDefault(current_time, 0) + 1);
             return true;
-        } else return false;
+        } else
+            return false;
     }
 }
