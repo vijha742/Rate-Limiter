@@ -32,6 +32,7 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
         if (this.tokens_in_bucket > 0) {
             this.tokens_in_bucket -= 1;
+            this.last_request_time = current_time;
             return true;
         } else
             return false;

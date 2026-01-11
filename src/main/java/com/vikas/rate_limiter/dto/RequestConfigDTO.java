@@ -6,6 +6,7 @@ import java.util.Map;
 
 @Data
 public class RequestConfigDTO {
+    private String ip;
     private Algorithm algo;
     private Map<String, Integer> parameters;
 
