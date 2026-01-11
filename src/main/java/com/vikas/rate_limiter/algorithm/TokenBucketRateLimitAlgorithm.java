@@ -15,24 +15,30 @@ import lombok.Data;
 @Data
 public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
-    private final int request_fill_rate;
-    private long start_time = System.currentTimeMillis();
-    private final int max_capacity;
-    private int tokens_in_bucket; // WARN: Why is this wrong and what can we do to set it up
-    private long last_request_time = System.currentTimeMillis();
+    private final int requestFillRate;
+    private long startTime = System.currentTimeMillis();
+    private final int maxCapacity;
+    private int tokensInBucket; // WARN: Why is this wrong and what can we do to set it up
+    private long lastRequestTime = System.currentTimeMillis();
+    
+    public TokenBucketRateLimitAlgorithm(int requestFillRate, int maxCapacity) {
+        this.requestFillRate = requestFillRate;
+        this.maxCapacity = maxCapacity;
+        this.tokensInBucket = maxCapacity;
+    }
 
     @Override
     public synchronized boolean acceptRequest() {
-        long current_time = System.currentTimeMillis();
-        this.tokens_in_bucket = (int) Math.min(
-                this.max_capacity,
-                ((current_time - this.last_request_time) / 1000)
-                        * this.request_fill_rate
-                        + this.tokens_in_bucket);
+        long currentTime = System.currentTimeMillis();
+        this.tokensInBucket = (int) Math.min(
+                this.maxCapacity,
+                ((currentTime - this.lastRequestTime) / 1000)
+                        * this.requestFillRate
+                        + this.tokensInBucket);
 
-        if (this.tokens_in_bucket > 0) {
-            this.tokens_in_bucket -= 1;
-            this.last_request_time = current_time;
+        if (this.tokensInBucket > 0) {
+            this.tokensInBucket -= 1;
+            this.lastRequestTime = currentTime;
             return true;
         } else
             return false;

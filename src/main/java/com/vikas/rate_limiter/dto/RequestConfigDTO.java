@@ -7,7 +7,10 @@ import java.util.Map;
 @Data
 public class RequestConfigDTO {
     private String ip;
+    @NotNull(message = "Algorithm cannot be null")
     private Algorithm algo;
+    @NotNull(message = "Parameters cannot be null")
+    @Size(min = 1, message = "At least one parameter must be provided")
     private Map<String, Integer> parameters;
 
     public enum Algorithm {

@@ -5,22 +5,22 @@ import lombok.Data;
 @Data
 public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
-        private final int process_rate;
+        private final int processRate;
         private int counter = 0;
-        private final int max_requests;
-        private long last_update_time = System.currentTimeMillis();
+        private final int maxCapacity;
+        private long lastUpdateTime = System.currentTimeMillis();
 
         public synchronized boolean acceptRequest() {
-                long current_time = System.currentTimeMillis();
+                long currentTime = System.currentTimeMillis();
                 this.counter = (int) Math.max(
                                 0,
                                 this.counter
-                                                - (current_time - this.last_update_time)
+                                                - (currentTime - this.lastUpdateTime)
                                                                 / 1000
-                                                                * this.process_rate);
-                if (this.counter < this.max_requests) {
+                                                                * this.processRate);
+                if (this.counter < this.maxCapacity) {
                         counter += 1;
-                        this.last_update_time = current_time;
+                        this.lastUpdateTime = currentTime;
                         return true;
                 } else
                         return false;

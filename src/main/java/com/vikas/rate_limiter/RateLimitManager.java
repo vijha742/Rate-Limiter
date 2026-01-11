@@ -78,8 +78,6 @@ public class RateLimitManager {
     public boolean allowRequest(String ip) {
         RateLimitAlgorithm algo = getAlgoWithIp(ip);
         log.info("Limiting algorithm received {}", algo);
-        if (algo.acceptRequest())
-            return true;
-        return false;
+        return algo.acceptRequest();
     }
 }

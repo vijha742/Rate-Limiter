@@ -7,24 +7,24 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Data
 public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
-    private final int max_requests;
-    private final int window_length;
-    private Map<Long, Integer> req_storage = new ConcurrentHashMap<>();
+    private final int maxRequests;
+    private final int windowLength;
+    private Map<Long, Integer> reqStorage = new ConcurrentHashMap<>();
 
-    public boolean acceptRequest() {
-        long current_time = System.currentTimeMillis();
-        long start_window = current_time - this.window_length * 1000;
-        int req_count = 0;
-        for (long val : req_storage.keySet()) {
-            if (val >= start_window) {
-                req_count += this.req_storage.get(val);
-            } else if (val < start_window - 5000) {
-                this.req_storage.remove(val);
+    public synchronized boolean acceptRequest() {
+        long currentTime = System.currentTimeMillis();
+        long startWindow = currentTime - this.windowLength * 1000;
+        int reqCount = 0;
+        for (long val : reqStorage.keySet()) {
+            if (val >= startWindow) {
+                reqCount += this.reqStorage.get(val);
+            } else if (val < startWindow - 5000) {
+                this.reqStorage.remove(val);
             }
         }
 
-        if (req_count < this.max_requests) {
-            this.req_storage.put(current_time, this.req_storage.getOrDefault(current_time, 0) + 1);
+        if (reqCount < this.maxRequests) {
+            this.reqStorage.put(currentTime, this.reqStorage.getOrDefault(currentTime, 0) + 1);
             return true;
         } else
             return false;

@@ -26,7 +26,7 @@ public class TestController {
     }
 
     @PostMapping("/config")
-    public boolean createConfig(@RequestBody RequestConfigDTO reqConfig, HttpServletRequest req) {
+    public boolean createConfig(@Valid @RequestBody RequestConfigDTO reqConfig, HttpServletRequest req) {
         // NOTE: One method in spring MVC allows only one parameter by
         // @RequestBody..if needed multiple parameters from req
         // body, create a DTO
