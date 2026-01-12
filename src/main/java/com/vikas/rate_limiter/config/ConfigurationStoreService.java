@@ -18,9 +18,9 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ConfigurationStoreService {
 
-    private final ConcurrentHashMap<String, RequestConfigDTO> user_config_map = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, RequestConfigDTO> userConfigMap = new ConcurrentHashMap<>();
 
-    private final ConcurrentHashMap<String, RateLimitAlgorithm> user_algo_map = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, RateLimitAlgorithm> userAlgoMap = new ConcurrentHashMap<>();
 
     // TODO: Before storing config also check whether the configs are proper or
     // not..if not store
@@ -29,12 +29,12 @@ public class ConfigurationStoreService {
         if (req != null) {
             String ip = config.getIp() != null ? config.getIp() : IpUtil.getUserIp(req);
             if (ip != null && config != null) {
-                this.user_config_map.put(ip, config);
+                this.userConfigMap.put(ip, config);
                 log.info(
                         "Current status of algo_map after adding key-value pair {}",
-                        this.user_config_map);
-                if (this.user_algo_map.containsKey(ip)) {
-                    this.user_algo_map.remove(ip);
+                        this.userConfigMap);
+                if (this.userAlgoMap.containsKey(ip)) {
+                    this.userAlgoMap.remove(ip);
                 }
                 return true;
             } else
@@ -44,23 +44,23 @@ public class ConfigurationStoreService {
     }
 
     public RequestConfigDTO getConfigWithIP(String ip) {
-        log.info("Current state of algo_map {}", this.user_config_map);
-        if (this.user_config_map.containsKey(ip)) {
-            return this.user_config_map.get(ip);
+        log.info("Current state of algo_map {}", this.userConfigMap);
+        if (this.userConfigMap.containsKey(ip)) {
+            return this.userConfigMap.get(ip);
         } else
             return null;
     }
 
     public RateLimitAlgorithm getAlgoWithIP(String ip) {
-        if (this.user_algo_map.containsKey(ip)) {
-            return this.user_algo_map.get(ip);
+        if (this.userAlgoMap.containsKey(ip)) {
+            return this.userAlgoMap.get(ip);
         } else
             return null;
     }
 
     public boolean setAlgoWithIP(String ip, RateLimitAlgorithm algo) {
         if (ip != null && !ip.isBlank()) {
-            this.user_algo_map.put(ip, algo);
+            this.userAlgoMap.put(ip, algo);
             return true;
         } else
             return false;

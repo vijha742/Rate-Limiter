@@ -45,22 +45,22 @@ public class RateLimitManager {
                     // is
                     // giving errors, if intialized somewhere else...
                     case Algorithm.TOKEN_BUCKET:
-                        int max_capacity = parameters.get("Max Capacity");
-                        int refill_rate = parameters.get("Refill Rate");
-                        yield new TokenBucketRateLimitAlgorithm(refill_rate, max_capacity);
+                        int maxCapacity = parameters.get("Max Capacity");
+                        int refillRate = parameters.get("Refill Rate");
+                        yield new TokenBucketRateLimitAlgorithm(refillRate, maxCapacity);
                     case Algorithm.LEAKY_BUCKET:
-                        int process_rate = parameters.get("Processing Rate");
-                        max_capacity = parameters.get("Max Capacity");
-                        yield new LeakyBucketRateLimitAlgorithm(process_rate, max_capacity);
+                        int processREate = parameters.get("Processing Rate");
+                        int maxCapacity = parameters.get("Max Capacity");
+                        yield new LeakyBucketRateLimitAlgorithm(processRate, maxCapacity);
                     case Algorithm.FIXED_WINDOW:
-                        int max_requests = parameters.get("Max Requests");
-                        int time_window = parameters.get("Window Length");
-                        yield new FixedCounterRateLimitAlgorithm(max_requests, time_window);
+                        int maxRequests = parameters.get("Max Requests");
+                        int timeWindow = parameters.get("Window Length");
+                        yield new FixedCounterRateLimitAlgorithm(maxRequests, timeWindow);
                     case Algorithm.SLIDING_WINDOW:
-                        max_requests = parameters.get("Max Requests");
-                        time_window = parameters.get("Window Length");
+                        maxRequests = parameters.get("Max Requests");
+                        timeWindow = parameters.get("Window Length");
                         yield new SlidingWindowRateLimitAlgorithm(
-                                max_requests, time_window);
+                                maxRequests, timeWindow);
                 };
                 this.configStore.setAlgoWithIP(ip, algorithm);
                 return algorithm;

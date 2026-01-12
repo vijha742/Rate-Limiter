@@ -7,22 +7,22 @@ import lombok.extern.slf4j.Slf4j;
 @Data
 public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
     private int counter;
-    private long window_start;
-    private int window_length;
+    private long windowStart;
+    private int windowLength;
     private int maxRequests;
 
-    public FixedCounterRateLimitAlgorithm(int maxRequests, int window_length) {
+    public FixedCounterRateLimitAlgorithm(int maxRequests, int windowLength) {
         this.maxRequests = maxRequests > 0 ? maxRequests : 10;
         this.counter = 0;
-        this.window_start = System.currentTimeMillis();
-        this.window_length = window_length > 1 ? window_length : 5;
+        this.windowStart = System.currentTimeMillis();
+        this.windowLength = windowLength > 1 ? windowLength : 5;
     }
 
     @Override
     public synchronized boolean acceptRequest() {
         long currentTime = System.currentTimeMillis();
-        if (currentTime - window_start > window_length * 1000) {
-            window_start = currentTime;
+        if (currentTime - windowStart > windowLength * 1000) {
+            windowStart = currentTime;
             counter = 1;
             return true;
         } else {
