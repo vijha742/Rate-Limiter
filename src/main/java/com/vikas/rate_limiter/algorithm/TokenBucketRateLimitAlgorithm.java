@@ -2,6 +2,8 @@ package com.vikas.rate_limiter.algorithm;
 
 import lombok.Data;
 
+import java.time.Clock;
+
 // NOTE: Used @component so that it becomes a Singleton and is initialized at the
 // application
 // startup. Without this application was being triggered at the RateFilter level
@@ -15,32 +17,36 @@ import lombok.Data;
 @Data
 public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
+    private final Clock clock;
     private final int requestFillRate;
-    private long startTime = System.currentTimeMillis();
+    private final long startTime;
     private final int maxCapacity;
     private int tokensInBucket; // WARN: Why is this wrong and what can we do to set it up
-    private long lastRequestTime = System.currentTimeMillis();
-    
-    public TokenBucketRateLimitAlgorithm(int requestFillRate, int maxCapacity) {
+    private long lastRequestTime;
+
+    public TokenBucketRateLimitAlgorithm(int requestFillRate, int maxCapacity, Clock clock) {
         this.requestFillRate = requestFillRate;
         this.maxCapacity = maxCapacity;
         this.tokensInBucket = maxCapacity;
+        this.clock = clock;
+        this.startTime = clock.millis();
+        this.lastRequestTime = clock.millis();
     }
 
     @Override
     public synchronized boolean acceptRequest() {
-        long currentTime = System.currentTimeMillis();
-        this.tokensInBucket = (int) Math.min(
-                this.maxCapacity,
-                ((currentTime - this.lastRequestTime) / 1000)
-                        * this.requestFillRate
-                        + this.tokensInBucket);
+        long currentTime = this.clock.millis();
+        this.tokensInBucket =
+                (int)
+                        Math.min(
+                                this.maxCapacity,
+                                ((currentTime - this.lastRequestTime) / 1000) * this.requestFillRate
+                                        + this.tokensInBucket);
 
         if (this.tokensInBucket > 0) {
             this.tokensInBucket -= 1;
             this.lastRequestTime = currentTime;
             return true;
-        } else
-            return false;
+        } else return false;
     }
 }
