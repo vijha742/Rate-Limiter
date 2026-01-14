@@ -4,6 +4,7 @@ import com.vikas.rate_limiter.config.ConfigurationStoreService;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 
 import lombok.RequiredArgsConstructor;
 
@@ -26,7 +27,8 @@ public class TestController {
     }
 
     @PostMapping("/config")
-    public boolean createConfig(@Valid @RequestBody RequestConfigDTO reqConfig, HttpServletRequest req) {
+    public boolean createConfig(
+            @Valid @RequestBody RequestConfigDTO reqConfig, HttpServletRequest req) {
         // NOTE: One method in spring MVC allows only one parameter by
         // @RequestBody..if needed multiple parameters from req
         // body, create a DTO
