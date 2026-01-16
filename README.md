@@ -175,7 +175,7 @@ The rate limiter follows a clean, layered architecture:
 
 1. **Clone the repository:**
 ```bash
-git clone <repository-url>
+git clone https://github.com/vijha742/Rate-Limiter
 cd rate-limiter
 ```
 
