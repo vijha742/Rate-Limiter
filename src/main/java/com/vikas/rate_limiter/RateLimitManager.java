@@ -6,6 +6,7 @@ import com.vikas.rate_limiter.algorithm.RateLimitAlgorithm;
 import com.vikas.rate_limiter.algorithm.SlidingWindowRateLimitAlgorithm;
 import com.vikas.rate_limiter.algorithm.TokenBucketRateLimitAlgorithm;
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
+import com.vikas.rate_limiter.dto.RateLimitDecision;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
 import com.vikas.rate_limiter.dto.RequestConfigDTO.Algorithm;
 
@@ -79,9 +80,14 @@ public class RateLimitManager {
         }
     }
 
-    public boolean allowRequest(String ip) {
+    // HACK: Start from here...
+    public RateLimitDecision evaluateRequest(String ip) {
+        RateLimitDecision decision = new RateLimitDecision();
         RateLimitAlgorithm algo = getAlgoWithIp(ip);
-        log.info("Limiting algorithm received {}", algo);
-        return algo.acceptRequest();
+        decision.setAllowed(algo.acceptRequest());
+        decision.setLimit(algo.getLimit());
+        decision.setRemaining(algo.getRemaining());
+        decision.setResetOn(algo.getResetOn);
+        return decision;
     }
 }
