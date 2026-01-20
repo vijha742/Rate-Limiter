@@ -21,7 +21,6 @@ public class TestController {
 
     private final ConfigurationStoreService configStore;
 
-    // TODO: Add remaining requests in response headers...
     @GetMapping("/test")
     public String getGreets() {
         return "Hello Vikas Jha...!";

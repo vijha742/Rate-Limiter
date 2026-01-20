@@ -24,6 +24,29 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
         if (reqCount < this.maxRequests) {
             this.reqStorage.add(currentTime);
             return true;
-        } else return false;
+        } else
+            return false;
+    }
+
+    @Override
+    public int getLimit() {
+        return maxRequests;
+    }
+
+    @Override
+    public int getRemainingRequests() {
+        long currentTime = this.clock.millis();
+        long startWindow = currentTime - this.windowLength * 1000;
+        int reqCount = 0;
+        while (this.reqStorage.size() > 0 && this.reqStorage.getFirst() < startWindow) {
+            this.reqStorage.remove();
+        }
+        reqCount = this.reqStorage.size();
+        return this.maxRequests - reqCount;
+    }
+
+    @Override
+    public long resetTime() {
+        return this.clock.millis() + 1000;
     }
 }

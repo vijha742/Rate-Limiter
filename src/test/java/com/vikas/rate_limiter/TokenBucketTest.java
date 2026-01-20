@@ -79,27 +79,6 @@ public class TokenBucketTest {
     }
 
     @Test
-    void shouldAllowRequestsUpToCapacity() {
-
-        // WARN: Should we initialize token bucket each time or just use @PreTest to
-        // initialize this and use in all methods...
-
-        int maxCapacity = 20;
-        int refillRate = 2;
-        int iterations = 50;
-
-        TokenBucketRateLimitAlgorithm tokenBucket = new TokenBucketRateLimitAlgorithm(
-                refillRate, maxCapacity, Clock.systemDefaultZone());
-
-        int success = 0;
-
-        for (int i = 0; i < iterations; i++) {
-            if (tokenBucket.acceptRequest())
-                success++;
-        }
-    }
-
-    @Test
     void shouldRejectRequestWhenBucketIsEmpty() {
         TestClock clock = new TestClock(Instant.now());
         TokenBucketRateLimitAlgorithm tokenBucket = new TokenBucketRateLimitAlgorithm(2, 5, clock);

@@ -33,7 +33,23 @@ public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
             if (counter < maxRequests) {
                 counter++;
                 return true;
-            } else return false;
+            } else
+                return false;
         }
+    }
+
+    @Override
+    public int getLimit() {
+        return this.maxRequests;
+    }
+
+    @Override
+    public int getRemainingRequests() {
+        return this.maxRequests - this.counter;
+    }
+
+    @Override
+    public long resetTime() {
+        return this.windowStart + this.windowLength;
     }
 }

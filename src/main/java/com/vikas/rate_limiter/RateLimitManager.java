@@ -34,44 +34,46 @@ public class RateLimitManager {
                 Map<String, Integer> parameters = reqConfig.getParameters();
                 log.info("Got these parameters {}", parameters);
                 Algorithm algo = reqConfig.getAlgo();
-                RateLimitAlgorithm algorithm = switch (algo) {
-                    // NOTE: Possible only after Java 14 options are ->(single line case)
-                    // and
-                    // yield(multi-line case)
-                    // NOTE: It is discouraged to use yield when the case is single line and
-                    // ->
-                    // can
-                    // be used
-                    // WARN: Why is it the variable which even won't be used and created
-                    // still
-                    // is
-                    // giving errors, if intialized somewhere else...
-                    case Algorithm.TOKEN_BUCKET:
-                        int maxCapacity = parameters.get("Max Capacity");
-                        int refillRate = parameters.get("Refill Rate");
-                        yield new TokenBucketRateLimitAlgorithm(
-                                refillRate, maxCapacity, Clock.systemDefaultZone());
-                    case Algorithm.LEAKY_BUCKET:
-                        int processRate = parameters.get("Processing Rate");
-                        int maxLimit = parameters.get("Max Capacity");
-                        yield new LeakyBucketRateLimitAlgorithm(
-                                processRate, maxLimit, Clock.systemDefaultZone());
-                    case Algorithm.FIXED_WINDOW:
-                        int maxRequests = parameters.get("Max Requests");
-                        int timeWindow = parameters.get("Window Length");
-                        yield new FixedCounterRateLimitAlgorithm(
-                                maxRequests, timeWindow, Clock.systemDefaultZone());
-                    case Algorithm.SLIDING_WINDOW:
-                        maxRequests = parameters.get("Max Requests");
-                        timeWindow = parameters.get("Window Length");
-                        yield new SlidingWindowRateLimitAlgorithm(
-                                Clock.systemDefaultZone(), maxRequests, timeWindow);
-                };
+                RateLimitAlgorithm algorithm =
+                        switch (algo) {
+                            // NOTE: Possible only after Java 14 options are ->(single line case)
+                            // and
+                            // yield(multi-line case)
+                            // NOTE: It is discouraged to use yield when the case is single line and
+                            // ->
+                            // can
+                            // be used
+                            // WARN: Why is it the variable which even won't be used and created
+                            // still
+                            // is
+                            // giving errors, if intialized somewhere else...
+                            case Algorithm.TOKEN_BUCKET:
+                                int maxCapacity = parameters.get("Max Capacity");
+                                int refillRate = parameters.get("Refill Rate");
+                                yield new TokenBucketRateLimitAlgorithm(
+                                        refillRate, maxCapacity, Clock.systemDefaultZone());
+                            case Algorithm.LEAKY_BUCKET:
+                                int processRate = parameters.get("Processing Rate");
+                                int maxLimit = parameters.get("Max Capacity");
+                                yield new LeakyBucketRateLimitAlgorithm(
+                                        processRate, maxLimit, Clock.systemDefaultZone());
+                            case Algorithm.FIXED_WINDOW:
+                                int maxRequests = parameters.get("Max Requests");
+                                int timeWindow = parameters.get("Window Length");
+                                yield new FixedCounterRateLimitAlgorithm(
+                                        maxRequests, timeWindow, Clock.systemDefaultZone());
+                            case Algorithm.SLIDING_WINDOW:
+                                maxRequests = parameters.get("Max Requests");
+                                timeWindow = parameters.get("Window Length");
+                                yield new SlidingWindowRateLimitAlgorithm(
+                                        Clock.systemDefaultZone(), maxRequests, timeWindow);
+                        };
                 this.configStore.setAlgoWithIP(ip, algorithm);
                 return algorithm;
             } else {
                 log.warn("Request Config was null {}", reqConfig);
-                RateLimitAlgorithm algorithm = new FixedCounterRateLimitAlgorithm(5, 10, Clock.systemDefaultZone());
+                RateLimitAlgorithm algorithm =
+                        new FixedCounterRateLimitAlgorithm(5, 10, Clock.systemDefaultZone());
                 this.configStore.setAlgoWithIP(ip, algorithm);
                 return algorithm;
             }
@@ -86,8 +88,8 @@ public class RateLimitManager {
         RateLimitAlgorithm algo = getAlgoWithIp(ip);
         decision.setAllowed(algo.acceptRequest());
         decision.setLimit(algo.getLimit());
-        decision.setRemaining(algo.getRemaining());
-        decision.setResetOn(algo.getResetOn);
+        decision.setRemaining(algo.getRemainingRequests());
+        decision.setResetOn(algo.resetTime());
         return decision;
     }
 }

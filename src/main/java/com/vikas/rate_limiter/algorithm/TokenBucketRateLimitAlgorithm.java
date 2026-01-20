@@ -36,17 +36,31 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
     @Override
     public synchronized boolean acceptRequest() {
         long currentTime = this.clock.millis();
-        this.tokensInBucket =
-                (int)
-                        Math.min(
-                                this.maxCapacity,
-                                ((currentTime - this.lastRequestTime) / 1000) * this.requestFillRate
-                                        + this.tokensInBucket);
+        this.tokensInBucket = (int) Math.min(
+                this.maxCapacity,
+                ((currentTime - this.lastRequestTime) / 1000) * this.requestFillRate
+                        + this.tokensInBucket);
 
         if (this.tokensInBucket > 0) {
             this.tokensInBucket -= 1;
             this.lastRequestTime = currentTime;
             return true;
-        } else return false;
+        } else
+            return false;
+    }
+
+    @Override
+    public int getLimit() {
+        return maxCapacity;
+    }
+
+    @Override
+    public int getRemainingRequests() {
+        return this.tokensInBucket;
+    }
+
+    @Override
+    public long resetTime() {
+        return lastRequestTime + 1000;
     }
 }
