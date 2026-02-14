@@ -5,7 +5,7 @@ import lombok.Data;
 import java.time.Clock;
 
 @Data
-public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
+public class LeakyBucketRateLimitAlgorithm {
 
         private final Clock clock;
         private final int processRate;
@@ -36,17 +36,14 @@ public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
                         return false;
         }
 
-        @Override
         public int getLimit() {
                 return this.maxCapacity;
         }
 
-        @Override
         public int getRemainingRequests() {
                 return this.maxCapacity - this.counter;
         }
 
-        @Override
         public long resetTime() {
                 return this.clock.millis() + 1000;
         }

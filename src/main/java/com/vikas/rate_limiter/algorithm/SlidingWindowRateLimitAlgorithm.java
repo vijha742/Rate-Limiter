@@ -6,7 +6,7 @@ import java.time.Clock;
 import java.util.ArrayDeque;
 
 @Data
-public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
+public class SlidingWindowRateLimitAlgorithm {
 
     private final Clock clock;
     private final int maxRequests;
@@ -24,16 +24,13 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
         if (reqCount < this.maxRequests) {
             this.reqStorage.add(currentTime);
             return true;
-        } else
-            return false;
+        } else return false;
     }
 
-    @Override
     public int getLimit() {
         return maxRequests;
     }
 
-    @Override
     public synchronized int getRemainingRequests() {
         long currentTime = this.clock.millis();
         long startWindow = currentTime - this.windowLength * 1000;
@@ -45,7 +42,6 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
         return this.maxRequests - reqCount;
     }
 
-    @Override
     public long resetTime() {
         return this.clock.millis() + 1000;
     }

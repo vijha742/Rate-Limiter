@@ -1,11 +1,9 @@
 package com.vikas.rate_limiter.algorithm;
 
+import org.springframework.data.redis.core.script.RedisScript;
+
 public interface RateLimitAlgorithm { // public type name
-    boolean acceptRequest();
+    boolean acceptRequest(String key);
 
-    int getLimit();
-
-    int getRemainingRequests();
-
-    long resetTime();
+    RedisScript<Long> getScript();
 }

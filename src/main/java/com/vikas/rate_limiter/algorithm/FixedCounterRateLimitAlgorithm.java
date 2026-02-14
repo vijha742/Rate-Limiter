@@ -1,55 +1,45 @@
 package com.vikas.rate_limiter.algorithm;
 
+import com.vikas.rate_limiter.config.ConfigurationStoreService;
+import com.vikas.rate_limiter.dto.RequestConfigDTO;
+
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Clock;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Slf4j
 @Data
+@Component
 public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
-    private final Clock clock;
-    private int counter;
-    private long windowStart;
-    private int windowLength;
-    private int maxRequests;
 
-    public FixedCounterRateLimitAlgorithm(int maxRequests, int windowLength, Clock clock) {
-        this.clock = clock;
-        this.maxRequests = maxRequests > 0 ? maxRequests : 10;
-        this.counter = 0;
-        this.windowStart = clock.millis();
-        this.windowLength = windowLength > 1 ? windowLength : 5;
-    }
+    private final StringRedisTemplate redisTemplate;
+    private final RedisScript<Long> script = getScript();
+    private final ConfigurationStoreService configStore;
 
     @Override
-    public synchronized boolean acceptRequest() {
-        long currentTime = clock.millis();
-        if (currentTime - windowStart > windowLength * 1000) {
-            windowStart = currentTime;
-            counter = 1;
-            return true;
-        } else {
-            if (counter < maxRequests) {
-                counter++;
-                return true;
-            } else
-                return false;
-        }
-    }
+    public synchronized boolean acceptRequest(String key) {
+        RequestConfigDTO config = configStore.getConfigWithIP(key);
+        int maxReq = config.getParameters().get("maxRequests");
+        int windowSize = config.getParameters().get("windowSize");
+        return redisTemplate.execute(
+                this.script,
+                List.of(key),
+                Integer.toString(maxReq),
+                Integer.toString(windowSize)) == 1L;
+    };
 
     @Override
-    public int getLimit() {
-        return this.maxRequests;
-    }
-
-    @Override
-    public int getRemainingRequests() {
-        return this.maxRequests - this.counter;
-    }
-
-    @Override
-    public long resetTime() {
-        return this.windowStart + this.windowLength;
+    public RedisScript<Long> getScript() {
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setLocation(new ClassPathResource("fixed-counter.lua"));
+        script.setResultType(Long.class);
+        return script;
     }
 }
