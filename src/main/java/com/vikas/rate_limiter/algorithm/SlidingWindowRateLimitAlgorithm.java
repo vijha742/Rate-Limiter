@@ -34,7 +34,7 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
     }
 
     @Override
-    public int getRemainingRequests() {
+    public synchronized int getRemainingRequests() {
         long currentTime = this.clock.millis();
         long startWindow = currentTime - this.windowLength * 1000;
         int reqCount = 0;
