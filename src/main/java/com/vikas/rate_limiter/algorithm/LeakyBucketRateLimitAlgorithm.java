@@ -9,19 +9,22 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Data
+@Component
 public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
         private final StringRedisTemplate template;
         private final RedisScript<Long> script = getScript();
         private final ConfigurationStoreService configStore;
 
+        @Override
         public synchronized boolean acceptRequest(String key) {
                 RequestConfigDTO config = configStore.getConfigWithIP(key);
-                int capacity = config.getParameters().get("capcity");
+                int capacity = config.getParameters().get("capacity");
                 int flowRate = config.getParameters().get("flowRate");
                 return template.execute(
                                 this.script,

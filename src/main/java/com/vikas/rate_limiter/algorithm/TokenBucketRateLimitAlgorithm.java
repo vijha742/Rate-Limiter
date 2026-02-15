@@ -31,19 +31,20 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
     private final RedisScript<Long> script = getScript();
     private final ConfigurationStoreService configStore;
 
-    public synchronized boolean acceptRequest(String key, int requested) {
+    @Override
+    public synchronized boolean acceptRequest(String key) {
         RequestConfigDTO config = configStore.getConfigWithIP(key);
         int capacity = config.getParameters().get("capacity");
         int refillRate = config.getParameters().get("refillRate");
+        int requested = 1; // HACK: Instead of this setup weighted endpoints and utilize those...
         return template.execute(
-                        script,
-                        List.of(key),
-                        Integer.toString(capacity),
-                        Integer.toString(refillRate),
-                        Long.toString(System.currentTimeMillis()),
-                        Integer.toString(requested),
-                        "600000")
-                == 1L;
+                script,
+                List.of(key),
+                Integer.toString(capacity),
+                Integer.toString(refillRate),
+                Long.toString(System.currentTimeMillis()),
+                Integer.toString(requested),
+                "600000") == 1L;
     }
 
     @Override
