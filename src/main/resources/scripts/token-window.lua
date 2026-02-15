@@ -46,4 +46,5 @@ redis.call("HMSET", KEYS[1], "tokens", tokens, "last_refill", now)
 -- set TTL so inactive buckets disappear
 redis.call("PEXPIRE", KEYS[1], ttl)
 
-return { allowed, tokens }
+-- return { allowed, tokens }
+return allowed

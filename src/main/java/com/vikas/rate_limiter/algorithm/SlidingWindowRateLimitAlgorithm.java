@@ -1,48 +1,40 @@
 package com.vikas.rate_limiter.algorithm;
 
+import com.vikas.rate_limiter.config.ConfigurationStoreService;
+import com.vikas.rate_limiter.dto.RequestConfigDTO;
+
 import lombok.Data;
 
-import java.time.Clock;
-import java.util.ArrayDeque;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
+
+import java.util.List;
 
 @Data
 public class SlidingWindowRateLimitAlgorithm {
 
-    private final Clock clock;
-    private final int maxRequests;
-    private final int windowLength;
-    private ArrayDeque<Long> reqStorage = new ArrayDeque<>();
+    private final StringRedisTemplate template;
+    private final RedisScript<Long> script = getScript();
+    private final ConfigurationStoreService configStore;
 
-    public synchronized boolean acceptRequest() {
-        long currentTime = this.clock.millis();
-        long startWindow = currentTime - this.windowLength * 1000;
-        int reqCount = 0;
-        while (this.reqStorage.size() > 0 && this.reqStorage.getFirst() < startWindow) {
-            this.reqStorage.remove();
-        }
-        reqCount = this.reqStorage.size();
-        if (reqCount < this.maxRequests) {
-            this.reqStorage.add(currentTime);
-            return true;
-        } else return false;
+    public synchronized boolean acceptRequest(String key) {
+        RequestConfigDTO config = configStore.getConfigWithIP(key);
+        int maxRequests = config.getParameters().get("maxRequests");
+        return template.execute(
+                this.script,
+                List.of(key),
+                "30000",
+                Integer.toString(maxRequests),
+                Long.toString(System.currentTimeMillis()),
+                "600000") == 1L;
     }
 
-    public int getLimit() {
-        return maxRequests;
-    }
-
-    public synchronized int getRemainingRequests() {
-        long currentTime = this.clock.millis();
-        long startWindow = currentTime - this.windowLength * 1000;
-        int reqCount = 0;
-        while (this.reqStorage.size() > 0 && this.reqStorage.getFirst() < startWindow) {
-            this.reqStorage.remove();
-        }
-        reqCount = this.reqStorage.size();
-        return this.maxRequests - reqCount;
-    }
-
-    public long resetTime() {
-        return this.clock.millis() + 1000;
+    public RedisScript<Long> getScript() {
+        DefaultRedisScript script = new DefaultRedisScript<>();
+        script.setLocation(new ClassPathResource("sliding-window.lua"));
+        script.setResultType(Long.class);
+        return script;
     }
 }

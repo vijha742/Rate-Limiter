@@ -1,50 +1,42 @@
 package com.vikas.rate_limiter.algorithm;
 
+import com.vikas.rate_limiter.config.ConfigurationStoreService;
+import com.vikas.rate_limiter.dto.RequestConfigDTO;
+
 import lombok.Data;
 
-import java.time.Clock;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
+
+import java.util.List;
 
 @Data
-public class LeakyBucketRateLimitAlgorithm {
+public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
-        private final Clock clock;
-        private final int processRate;
-        private int counter = 0;
-        private final int maxCapacity;
-        private long lastUpdateTime;
+        private final StringRedisTemplate template;
+        private final RedisScript<Long> script = getScript();
+        private final ConfigurationStoreService configStore;
 
-        public LeakyBucketRateLimitAlgorithm(int processRate, int maxCapacity, Clock clock) {
-                this.clock = clock;
-                this.processRate = processRate;
-                this.maxCapacity = maxCapacity;
-                this.lastUpdateTime = clock.millis();
+        public synchronized boolean acceptRequest(String key) {
+                RequestConfigDTO config = configStore.getConfigWithIP(key);
+                int capacity = config.getParameters().get("capcity");
+                int flowRate = config.getParameters().get("flowRate");
+                return template.execute(
+                                this.script,
+                                List.of(key),
+                                Integer.toString(capacity),
+                                Long.toString(System.currentTimeMillis()),
+                                Integer.toString(flowRate),
+                                "600000") == 1L;
         }
 
-        public synchronized boolean acceptRequest() {
-                long currentTime = this.clock.millis();
-                this.counter = (int) Math.max(
-                                0,
-                                this.counter
-                                                - (currentTime - this.lastUpdateTime)
-                                                                / 1000
-                                                                * this.processRate);
-                if (this.counter < this.maxCapacity) {
-                        counter += 1;
-                        this.lastUpdateTime = currentTime;
-                        return true;
-                } else
-                        return false;
-        }
-
-        public int getLimit() {
-                return this.maxCapacity;
-        }
-
-        public int getRemainingRequests() {
-                return this.maxCapacity - this.counter;
-        }
-
-        public long resetTime() {
-                return this.clock.millis() + 1000;
+        @Override
+        public RedisScript<Long> getScript() {
+                DefaultRedisScript script = new DefaultRedisScript<>();
+                script.setLocation(new ClassPathResource("leaky-bucket.lua"));
+                script.setResultType(Long.class);
+                return script;
         }
 }

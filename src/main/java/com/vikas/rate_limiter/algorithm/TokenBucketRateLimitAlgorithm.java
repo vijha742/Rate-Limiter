@@ -1,8 +1,17 @@
 package com.vikas.rate_limiter.algorithm;
 
+import com.vikas.rate_limiter.config.ConfigurationStoreService;
+import com.vikas.rate_limiter.dto.RequestConfigDTO;
+
 import lombok.Data;
 
-import java.time.Clock;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.script.DefaultRedisScript;
+import org.springframework.data.redis.core.script.RedisScript;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 // NOTE: Used @component so that it becomes a Singleton and is initialized at the
 // application
@@ -15,49 +24,33 @@ import java.time.Clock;
 // window algorithm...They
 // were working as usual...
 @Data
-public class TokenBucketRateLimitAlgorithm {
+@Component
+public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
-    private final Clock clock;
-    private final int requestFillRate;
-    private final long startTime;
-    private final int maxCapacity;
-    private int tokensInBucket; // WARN: Why is this wrong and what can we do to set it up
-    private long lastRequestTime;
+    private final StringRedisTemplate template;
+    private final RedisScript<Long> script = getScript();
+    private final ConfigurationStoreService configStore;
 
-    public TokenBucketRateLimitAlgorithm(int requestFillRate, int maxCapacity, Clock clock) {
-        this.requestFillRate = requestFillRate;
-        this.maxCapacity = maxCapacity;
-        this.tokensInBucket = maxCapacity;
-        this.clock = clock;
-        this.startTime = clock.millis();
-        this.lastRequestTime = clock.millis();
+    public synchronized boolean acceptRequest(String key, int requested) {
+        RequestConfigDTO config = configStore.getConfigWithIP(key);
+        int capacity = config.getParameters().get("capacity");
+        int refillRate = config.getParameters().get("refillRate");
+        return template.execute(
+                        script,
+                        List.of(key),
+                        Integer.toString(capacity),
+                        Integer.toString(refillRate),
+                        Long.toString(System.currentTimeMillis()),
+                        Integer.toString(requested),
+                        "600000")
+                == 1L;
     }
 
-    public synchronized boolean acceptRequest() {
-        long currentTime = this.clock.millis();
-        this.tokensInBucket =
-                (int)
-                        Math.min(
-                                this.maxCapacity,
-                                ((currentTime - this.lastRequestTime) / 1000) * this.requestFillRate
-                                        + this.tokensInBucket);
-
-        if (this.tokensInBucket > 0) {
-            this.tokensInBucket -= 1;
-            this.lastRequestTime = currentTime;
-            return true;
-        } else return false;
-    }
-
-    public int getLimit() {
-        return maxCapacity;
-    }
-
-    public int getRemainingRequests() {
-        return this.tokensInBucket;
-    }
-
-    public long resetTime() {
-        return lastRequestTime + 1000;
+    @Override
+    public RedisScript<Long> getScript() {
+        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+        script.setLocation(new ClassPathResource("token-window.lua"));
+        script.setResultType(Long.class);
+        return script;
     }
 }

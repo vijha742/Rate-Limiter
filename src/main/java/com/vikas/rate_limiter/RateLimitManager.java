@@ -1,7 +1,10 @@
 package com.vikas.rate_limiter;
 
 import com.vikas.rate_limiter.algorithm.FixedCounterRateLimitAlgorithm;
+import com.vikas.rate_limiter.algorithm.LeakyBucketRateLimitAlgorithm;
 import com.vikas.rate_limiter.algorithm.RateLimitAlgorithm;
+import com.vikas.rate_limiter.algorithm.SlidingWindowRateLimitAlgorithm;
+import com.vikas.rate_limiter.algorithm.TokenBucketRateLimitAlgorithm;
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
 import com.vikas.rate_limiter.dto.RateLimitDecision;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
@@ -21,6 +24,9 @@ public class RateLimitManager {
 
     private final ConfigurationStoreService configStore;
     private final FixedCounterRateLimitAlgorithm fixedWindowAlgo;
+    private final TokenBucketRateLimitAlgorithm tokenBucketAlgo;
+    private final SlidingWindowRateLimitAlgorithm slidingWindowAlgo;
+    private final LeakyBucketRateLimitAlgorithm leakyBucketAlgo;
 
     public RateLimitAlgorithm getAlgoWithIp(String ip) {
         RequestConfigDTO reqConfig = configStore.getConfigWithIP(ip);
@@ -55,7 +61,10 @@ public class RateLimitManager {
     public RateLimitDecision evaluateRequest(String ip) {
         RateLimitDecision decision = new RateLimitDecision();
         RateLimitAlgorithm algo = getAlgoWithIp(ip);
-        decision.setAllowed(algo.acceptRequest(ip));
+        decision.setAllowed(
+                algo.acceptRequest(
+                        ip)); // FIX: fix this..either set up RateLimitingInterface or call method
+        // based on each Algorithm
         decision.setLimit(10);
         decision.setRemaining(8);
         decision.setResetOn(60);

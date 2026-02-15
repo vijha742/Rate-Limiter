@@ -23,7 +23,6 @@ public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
     private final RedisScript<Long> script = getScript();
     private final ConfigurationStoreService configStore;
 
-    @Override
     public synchronized boolean acceptRequest(String key) {
         RequestConfigDTO config = configStore.getConfigWithIP(key);
         int maxReq = config.getParameters().get("maxRequests");
