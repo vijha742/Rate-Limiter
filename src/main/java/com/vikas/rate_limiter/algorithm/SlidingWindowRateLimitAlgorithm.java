@@ -18,28 +18,28 @@ import java.util.List;
 public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
 
     private final StringRedisTemplate template;
-    private final RedisScript<Long> script = getScript();
+    private final RedisScript<List> script = getScript();
     private final ConfigurationStoreService configStore;
 
     @Override
-    public synchronized boolean acceptRequest(String key) {
+    public synchronized List<Long> acceptRequest(String key) {
         RequestConfigDTO config = configStore.getConfigWithIP(key);
         int maxRequests = config.getParameters().get("maxRequests");
-        return template.execute(
-                        this.script,
-                        List.of(key),
-                        "30000",
-                        Integer.toString(maxRequests),
-                        Long.toString(System.currentTimeMillis()),
-                        "600000")
-                == 1L;
+        List<Long> res = template.execute(
+                this.script,
+                List.of(key),
+                "30000",
+                Integer.toString(maxRequests),
+                Long.toString(System.currentTimeMillis()),
+                "600000");
+        return res;
     }
 
     @Override
-    public RedisScript<Long> getScript() {
-        DefaultRedisScript script = new DefaultRedisScript<>();
+    public RedisScript<List> getScript() {
+        DefaultRedisScript<List> script = new DefaultRedisScript<>();
         script.setLocation(new ClassPathResource("sliding-window.lua"));
-        script.setResultType(Long.class);
+        script.setResultType(List.class);
         return script;
     }
 }

@@ -18,28 +18,29 @@ import java.util.List;
 public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
         private final StringRedisTemplate template;
-        private final RedisScript<Long> script = getScript();
+        private final RedisScript<List> script = getScript();
         private final ConfigurationStoreService configStore;
 
         @Override
-        public synchronized boolean acceptRequest(String key) {
+        public synchronized List acceptRequest(String key) {
                 RequestConfigDTO config = configStore.getConfigWithIP(key);
                 int capacity = config.getParameters().get("capacity");
                 int flowRate = config.getParameters().get("flowRate");
-                return template.execute(
+                List<Long> res = template.execute(
                                 this.script,
                                 List.of(key),
                                 Integer.toString(capacity),
                                 Long.toString(System.currentTimeMillis()),
                                 Integer.toString(flowRate),
-                                "600000") == 1L;
+                                "600000");
+                return res;
         }
 
         @Override
-        public RedisScript<Long> getScript() {
+        public RedisScript<List> getScript() {
                 DefaultRedisScript script = new DefaultRedisScript<>();
                 script.setLocation(new ClassPathResource("leaky-bucket.lua"));
-                script.setResultType(Long.class);
+                script.setResultType(List.class);
                 return script;
         }
 }

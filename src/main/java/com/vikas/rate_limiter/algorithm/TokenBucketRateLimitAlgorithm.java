@@ -28,30 +28,32 @@ import java.util.List;
 public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
     private final StringRedisTemplate template;
-    private final RedisScript<Long> script = getScript();
+    private final RedisScript<List> script = getScript();
     private final ConfigurationStoreService configStore;
 
     @Override
-    public synchronized boolean acceptRequest(String key) {
+    public synchronized List<Long> acceptRequest(String key) {
         RequestConfigDTO config = configStore.getConfigWithIP(key);
         int capacity = config.getParameters().get("capacity");
         int refillRate = config.getParameters().get("refillRate");
         int requested = 1; // HACK: Instead of this setup weighted endpoints and utilize those...
-        return template.execute(
-                script,
-                List.of(key),
-                Integer.toString(capacity),
-                Integer.toString(refillRate),
-                Long.toString(System.currentTimeMillis()),
-                Integer.toString(requested),
-                "600000") == 1L;
+        List<Long> res =
+                template.execute(
+                        script,
+                        List.of(key),
+                        Integer.toString(capacity),
+                        Integer.toString(refillRate),
+                        Long.toString(System.currentTimeMillis()),
+                        Integer.toString(requested),
+                        "600000");
+        return res;
     }
 
     @Override
-    public RedisScript<Long> getScript() {
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+    public RedisScript<List> getScript() {
+        DefaultRedisScript<List> script = new DefaultRedisScript<>();
         script.setLocation(new ClassPathResource("token-window.lua"));
-        script.setResultType(Long.class);
+        script.setResultType(List.class);
         return script;
     }
 }

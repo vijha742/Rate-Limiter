@@ -15,3 +15,5 @@ rate-limiter:
   properties:
     fallback:
       algorithm: TOKEN_BUCKET
+    redis:
+      ttl: 600000

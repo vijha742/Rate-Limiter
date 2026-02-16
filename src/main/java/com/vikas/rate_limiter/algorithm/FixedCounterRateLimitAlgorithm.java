@@ -20,26 +20,27 @@ import java.util.List;
 public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
 
     private final StringRedisTemplate redisTemplate;
-    private final RedisScript<Long> script = getScript();
+    private final RedisScript<List> script = getScript();
     private final ConfigurationStoreService configStore;
 
     @Override
-    public synchronized boolean acceptRequest(String key) {
+    public synchronized List<Long> acceptRequest(String key) {
         RequestConfigDTO config = configStore.getConfigWithIP(key);
         int maxReq = config.getParameters().get("maxRequests");
         int windowSize = config.getParameters().get("windowSize");
-        return redisTemplate.execute(
+        List<Long> res = redisTemplate.execute(
                 this.script,
                 List.of(key),
                 Integer.toString(maxReq),
-                Integer.toString(windowSize)) == 1L;
+                Integer.toString(windowSize));
+        return res;
     };
 
     @Override
-    public RedisScript<Long> getScript() {
-        DefaultRedisScript<Long> script = new DefaultRedisScript<>();
+    public RedisScript<List> getScript() {
+        DefaultRedisScript<List> script = new DefaultRedisScript<>();
         script.setLocation(new ClassPathResource("fixed-counter.lua"));
-        script.setResultType(Long.class);
+        script.setResultType(List.class);
         return script;
     }
 }
