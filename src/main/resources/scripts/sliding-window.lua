@@ -25,5 +25,5 @@ end
 
 redis.call("PEXPIRE", KEYS[1], ttl)
 
--- return { allowed, current }
-return allowed
+return { allowed, current }
+-- return allowed

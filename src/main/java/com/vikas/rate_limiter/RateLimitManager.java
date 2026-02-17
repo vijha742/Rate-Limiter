@@ -62,17 +62,22 @@ public class RateLimitManager {
         } else {
             decision.setAllowed(false);
         }
+        // capacity -> TB,LB maxRequests -> SW, FC
+        int max = 0;
         if (reqConfig.getAlgo() == Algorithm.TOKEN_BUCKET
                 || reqConfig.getAlgo() == Algorithm.LEAKY_BUCKET) {
-            decision.setLimit(
-                    reqConfig
-                            .getParameters()
-                            .get("capacity")); // capacity -> TB,LB maxRequests -> SW, FC
+            max = reqConfig.getParameters().get("capacity");
         } else {
-            decision.setLimit(reqConfig.getParameters().get("maxRequests"));
+            max = reqConfig.getParameters().get("maxRequests");
         }
-        decision.setRemaining(info.get(1).intValue());
-        decision.setResetOn(System.currentTimeMillis() + this.props.getRedis().getTtl());
+        decision.setLimit(max);
+        decision.setRemaining(max - info.get(1).intValue());
+        if (reqConfig.getAlgo() == Algorithm.FIXED_WINDOW) {
+            decision.setResetOn(info.get(2));
+
+        } else {
+            decision.setResetOn(System.currentTimeMillis() + 1000);
+        }
         return decision;
     }
 

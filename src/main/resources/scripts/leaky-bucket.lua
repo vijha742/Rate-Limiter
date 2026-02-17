@@ -26,5 +26,5 @@ end
 redis.call("HMSET", KEYS[1], "last_time", time_now, "queue_size", queue_size)
 redis.call("PEXPIRE", KEYS[1], ttl)
 
--- return { allowed, queue_size }
-return allowed
+return { allowed, queue_size }
+-- return allowed
