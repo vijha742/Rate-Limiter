@@ -17,30 +17,31 @@ import java.util.List;
 @Component
 public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
-        private final StringRedisTemplate template;
-        private final RedisScript<List> script = getScript();
-        private final ConfigurationStoreService configStore;
+    private final StringRedisTemplate template;
+    private final RedisScript<List> script = getScript();
+    private final ConfigurationStoreService configStore;
 
-        @Override
-        public synchronized List acceptRequest(String key) {
-                RequestConfigDTO config = configStore.getConfigWithIP(key);
-                int capacity = config.getParameters().get("capacity");
-                int flowRate = config.getParameters().get("flowRate");
-                List<Long> res = template.execute(
-                                this.script,
-                                List.of(key),
-                                Integer.toString(capacity),
-                                Long.toString(System.currentTimeMillis()),
-                                Integer.toString(flowRate),
-                                "600000");
-                return res;
-        }
+    @Override
+    public synchronized List acceptRequest(String key) {
+        RequestConfigDTO config = configStore.getConfigWithIP(key);
+        int capacity = config.getParameters().get("capacity");
+        int flowRate = config.getParameters().get("flowRate");
+        List<Long> res =
+                template.execute(
+                        this.script,
+                        List.of(key),
+                        Integer.toString(capacity),
+                        Long.toString(System.currentTimeMillis()),
+                        Integer.toString(flowRate),
+                        "600000");
+        return res;
+    }
 
-        @Override
-        public RedisScript<List> getScript() {
-                DefaultRedisScript script = new DefaultRedisScript<>();
-                script.setLocation(new ClassPathResource("leaky-bucket.lua"));
-                script.setResultType(List.class);
-                return script;
-        }
+    @Override
+    public RedisScript<List> getScript() {
+        DefaultRedisScript script = new DefaultRedisScript<>();
+        script.setLocation(new ClassPathResource("scripts/leaky-bucket.lua"));
+        script.setResultType(List.class);
+        return script;
+    }
 }

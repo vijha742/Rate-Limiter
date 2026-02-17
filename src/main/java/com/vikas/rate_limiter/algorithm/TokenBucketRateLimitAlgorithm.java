@@ -52,7 +52,7 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
     @Override
     public RedisScript<List> getScript() {
         DefaultRedisScript<List> script = new DefaultRedisScript<>();
-        script.setLocation(new ClassPathResource("token-window.lua"));
+        script.setLocation(new ClassPathResource("scripts/token-window.lua"));
         script.setResultType(List.class);
         return script;
     }

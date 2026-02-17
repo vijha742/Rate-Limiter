@@ -38,7 +38,7 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
     @Override
     public RedisScript<List> getScript() {
         DefaultRedisScript<List> script = new DefaultRedisScript<>();
-        script.setLocation(new ClassPathResource("sliding-window.lua"));
+        script.setLocation(new ClassPathResource("scripts/sliding-window.lua"));
         script.setResultType(List.class);
         return script;
     }
