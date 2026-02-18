@@ -2,6 +2,7 @@ package com.vikas.rate_limiter.algorithm;
 
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
+import com.vikas.rate_limiter.utils.RateLimiterProperties;
 
 import lombok.Data;
 
@@ -30,13 +31,20 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
     private final StringRedisTemplate template;
     private final RedisScript<List> script = getScript();
     private final ConfigurationStoreService configStore;
+    private final RateLimiterProperties props;
 
     @Override
     public synchronized List<Long> acceptRequest(String key) {
         RequestConfigDTO config = configStore.getConfigWithIP(key);
-        int capacity = config.getParameters().get("capacity");
-        int refillRate = config.getParameters().get("refillRate");
-        int requested = 1; // HACK: Instead of this setup weighted endpoints and utilize those...
+        int capacity, refillRate, requested = 1;
+        if (config != null) {
+            capacity = config.getParameters().get("capacity");
+            refillRate = config.getParameters().get("refillRate");
+            // HACK: Instead of this setup weighted endpoints and utilize those...
+        } else {
+            capacity = props.getLimits().getDefaultCapacity();
+            refillRate = props.getLimits().getRefillRate();
+        }
         List<Long> res =
                 template.execute(
                         script,

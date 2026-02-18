@@ -2,7 +2,6 @@ package com.vikas.rate_limiter.config;
 
 import com.vikas.rate_limiter.algorithm.RateLimitAlgorithm;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
-import com.vikas.rate_limiter.dto.RequestConfigDTO.Algorithm;
 import com.vikas.rate_limiter.utils.IpUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -12,8 +11,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.stereotype.Component;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
@@ -50,15 +47,17 @@ public class ConfigurationStoreService {
         log.info("Current state of algo_map {}", this.userConfigMap);
         if (this.userConfigMap.containsKey(ip)) {
             return this.userConfigMap.get(ip);
-        } else {
-            RequestConfigDTO config = new RequestConfigDTO();
-            config.setAlgo(Algorithm.FIXED_WINDOW);
-            Map<String, Integer> map = new HashMap<>();
-            map.put("windowSize", 60);
-            map.put("maxRequests", 10);
-            config.setParameters(map);
-            return config;
-        }
+        } else
+            return null;
+        // } else {
+        // RequestConfigDTO config = new RequestConfigDTO();
+        // config.setAlgo(Algorithm.FIXED_WINDOW);
+        // Map<String, Integer> map = new HashMap<>();
+        // map.put("windowSize", 60);
+        // map.put("maxRequests", 10);
+        // config.setParameters(map);
+        // return config;
+        // }
     }
 
     public RateLimitAlgorithm getAlgoWithIP(String ip) {

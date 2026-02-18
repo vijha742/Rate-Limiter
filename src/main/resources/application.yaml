@@ -17,3 +17,6 @@ rate-limiter:
       algorithm: TOKEN_BUCKET
     redis:
       ttl: 600000
+    limits:
+      defaultCapacity: 10
+      refillRate: 1
