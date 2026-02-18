@@ -39,7 +39,7 @@ public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
     @Override
     public RedisScript<List> getScript() {
         DefaultRedisScript<List> script = new DefaultRedisScript<>();
-        script.setLocation(new ClassPathResource("fixed-counter.lua"));
+        script.setLocation(new ClassPathResource("scripts/fixed-counter.lua"));
         script.setResultType(List.class);
         return script;
     }

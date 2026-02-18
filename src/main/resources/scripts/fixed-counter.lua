@@ -13,6 +13,6 @@ if tonumber(current) <= tonumber(ARGV[1]) then
 	allowed = 1
 end
 
-local ttl = redis.call("ttl", KEY[1])
+local ttl = redis.call("ttl", KEYS[1])
 
-return { allowed, current, ttll }
+return { allowed, current, ttl }
