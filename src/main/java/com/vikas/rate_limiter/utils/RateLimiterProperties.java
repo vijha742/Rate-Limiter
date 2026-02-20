@@ -5,6 +5,8 @@ import com.vikas.rate_limiter.dto.RequestConfigDTO.Algorithm;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import java.util.List;
+
 @Configuration
 @ConfigurationProperties(prefix = "rate-limiter.properties")
 public class RateLimiterProperties {
@@ -12,6 +14,37 @@ public class RateLimiterProperties {
 	private Fallback fallback;
 	private Redis redis;
 	private Limits limits;
+	private Security security;
+
+	public static class Security {
+		private boolean enabled;
+		private List<String> trustedProxies;
+		private boolean logSuspicious;
+
+		public boolean isEnabled() {
+			return enabled;
+		}
+
+		public void setEnabled(boolean enabled) {
+			this.enabled = enabled;
+		}
+
+		public List<String> getTrustedProxies() {
+			return trustedProxies;
+		}
+
+		public void setTrustedProxies(List<String> trustedProxies) {
+			this.trustedProxies = trustedProxies;
+		}
+
+		public boolean isLogSuspicious() {
+			return logSuspicious;
+		}
+
+		public void setLogSuspicious(boolean logSuspicious) {
+			this.logSuspicious = logSuspicious;
+		}
+	}
 
 	public static class Fallback {
 		private Algorithm algorithm;
@@ -89,5 +122,13 @@ public class RateLimiterProperties {
 
 	public void setLimits(Limits limits) {
 		this.limits = limits;
+	}
+
+	public Security getSecurity() {
+		return security;
+	}
+
+	public void setSecurity(Security security) {
+		this.security = security;
 	}
 }

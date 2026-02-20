@@ -20,3 +20,11 @@ rate-limiter:
     limits:
       defaultCapacity: 10
       refillRate: 1
+    security:
+      enabled: true
+      trusted-proxies:
+        - 127.0.0.1
+        - 10.0.0.0/8
+        - 172.16.0.0/12
+        - 192.168.0.0/16
+      log-suspicious: true

@@ -23,12 +23,13 @@ import java.io.PrintWriter;
 @RequiredArgsConstructor
 public class RateFilter extends OncePerRequestFilter {
     private final RateLimitManager manager;
+    private final IpUtil ipUtility;
 
     @Override
     protected void doFilterInternal(
             HttpServletRequest req, HttpServletResponse res, FilterChain filterChain)
             throws ServletException, IOException {
-        String ip = IpUtil.getUserIp(req);
+        String ip = ipUtility.getUserIp(req);
         log.info("Request recieved from IP {}", ip);
         RateLimitDecision decision = manager.evaluateRequest(ip);
         res.setHeader("X-RateLimit-Limit", String.valueOf(decision.getLimit()));

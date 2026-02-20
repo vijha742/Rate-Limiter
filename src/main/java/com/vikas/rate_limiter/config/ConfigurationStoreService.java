@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ConfigurationStoreService {
 
     private final ConcurrentHashMap<String, RequestConfigDTO> userConfigMap = new ConcurrentHashMap<>();
-
+    private final IpUtil ipUtility;
     private final ConcurrentHashMap<String, RateLimitAlgorithm> userAlgoMap = new ConcurrentHashMap<>();
 
     // TODO: Before storing config also check whether the configs are proper or
@@ -27,7 +27,7 @@ public class ConfigurationStoreService {
     // the default algorithm...
     public boolean storeConfigWithIP(HttpServletRequest req, RequestConfigDTO config) {
         if (req != null) {
-            String ip = config.getIp() != null ? config.getIp() : IpUtil.getUserIp(req);
+            String ip = config.getIp() != null ? config.getIp() : ipUtility.getUserIp(req);
             if (ip != null && config != null) {
                 this.userConfigMap.put(ip, config);
                 log.info(
