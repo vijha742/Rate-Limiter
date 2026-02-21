@@ -2,6 +2,7 @@ package com.vikas.rate_limiter.algorithm;
 
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
+import com.vikas.rate_limiter.utils.RateLimiterProperties;
 
 import lombok.Data;
 
@@ -20,18 +21,20 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
     private final StringRedisTemplate template;
     private final RedisScript<List> script = getScript();
     private final ConfigurationStoreService configStore;
+    private final RateLimiterProperties properties;
 
     @Override
     public synchronized List<Long> acceptRequest(String key) {
         RequestConfigDTO config = configStore.getConfigWithIP(key);
         int maxRequests = config.getParameters().get("maxRequests");
-        List<Long> res = template.execute(
-                this.script,
-                List.of(key),
-                "30000",
-                Integer.toString(maxRequests),
-                Long.toString(System.currentTimeMillis()),
-                "600000");
+        List<Long> res =
+                template.execute(
+                        this.script,
+                        List.of(key),
+                        String.valueOf(properties.getRedis().getTtl() * 2),
+                        Integer.toString(maxRequests),
+                        Long.toString(System.currentTimeMillis()),
+                        String.valueOf(properties.getRedis().getTtl()));
         return res;
     }
 
