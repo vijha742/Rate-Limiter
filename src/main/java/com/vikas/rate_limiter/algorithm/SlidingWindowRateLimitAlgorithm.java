@@ -27,14 +27,15 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
     public synchronized List<Long> acceptRequest(String key) {
         RequestConfigDTO config = configStore.getConfigWithIP(key);
         int maxRequests = config.getParameters().get("maxRequests");
+        int windowTime = config.getParameters().get("windowTime");
         List<Long> res =
                 template.execute(
                         this.script,
                         List.of(key),
-                        String.valueOf(properties.getRedis().getTtl() * 2),
+                        Integer.toString(windowTime),
                         Integer.toString(maxRequests),
                         Long.toString(System.currentTimeMillis()),
-                        String.valueOf(properties.getRedis().getTtl()));
+                        Integer.toString(windowTime * 2));
         return res;
     }
 
