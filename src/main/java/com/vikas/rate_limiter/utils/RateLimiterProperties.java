@@ -8,12 +8,10 @@ import org.springframework.context.annotation.Configuration;
 import java.util.List;
 
 @Configuration
-@ConfigurationProperties(prefix = "rate-limiter.properties")
+@ConfigurationProperties(prefix = "rate-limiter")
 public class RateLimiterProperties {
 
-	private Fallback fallback;
-	private Redis redis;
-	private Limits limits;
+	private EndPoints endpoints;
 	private Security security;
 
 	public static class Security {
@@ -46,6 +44,57 @@ public class RateLimiterProperties {
 		}
 	}
 
+	public static class EndPoints {
+		private String path;
+		private Properties properties;
+		private Redis redis;
+
+		public String getPath() {
+			return path;
+		}
+
+		public void setPath(String path) {
+			this.path = path;
+		}
+
+		public Properties getProperties() {
+			return properties;
+		}
+
+		public void setProperties(Properties properties) {
+			this.properties = properties;
+		}
+
+		public Redis getRedis() {
+			return redis;
+		}
+
+		public void setRedis(Redis redis) {
+			this.redis = redis;
+		}
+	}
+
+	public static class Properties {
+		private Fallback fallback;
+		private Limits limits;
+
+		public Fallback getFallback() {
+			return fallback;
+		}
+
+		public void setFallback(Fallback fallback) {
+			this.fallback = fallback;
+		}
+
+		public Limits getLimits() {
+			return limits;
+		}
+
+		public void setLimits(Limits limits) {
+			this.limits = limits;
+		}
+	}
+
 	public static class Fallback {
 		private Algorithm algorithm;
 
@@ -55,27 +104,6 @@ public class RateLimiterProperties {
 
 		public void setAlgorithm(Algorithm algorithm) {
 			this.algorithm = algorithm;
-		}
-	}
-
-	public static class Redis {
-		private long ttl;
-		private String keyPrefix;
-
-		public long getTtl() {
-			return ttl;
-		}
-
-		public void setTtl(long ttl) {
-			this.ttl = ttl;
-		}
-
-		public String getKeyPrefix() {
-			return keyPrefix;
-		}
-
-		public void setKeyPrefix(String keyPrefix) {
-			this.keyPrefix = keyPrefix;
 		}
 	}
 
@@ -100,28 +128,33 @@ public class RateLimiterProperties {
 		}
 	}
 
-	public Fallback getFallback() {
-		return fallback;
+	public static class Redis {
+		private long ttl;
+		private String keyPrefix;
+
+		public long getTtl() {
+			return ttl;
+		}
+
+		public void setTtl(long ttl) {
+			this.ttl = ttl;
+		}
+
+		public String getKeyPrefix() {
+			return keyPrefix;
+		}
+
+		public void setKeyPrefix(String keyPrefix) {
+			this.keyPrefix = keyPrefix;
+		}
 	}
 
-	public void setFallback(Fallback fallback) {
-		this.fallback = fallback;
+	public EndPoints getEndpoints() {
+		return endpoints;
 	}
 
-	public Redis getRedis() {
-		return redis;
-	}
-
-	public void setRedis(Redis redis) {
-		this.redis = redis;
-	}
-
-	public Limits getLimits() {
-		return limits;
-	}
-
-	public void setLimits(Limits limits) {
-		this.limits = limits;
+	public void setEndpoints(EndPoints endpoints) {
+		this.endpoints = endpoints;
 	}
 
 	public Security getSecurity() {
@@ -130,5 +163,22 @@ public class RateLimiterProperties {
 
 	public void setSecurity(Security security) {
 		this.security = security;
+	}
+
+	// Convenience methods to access nested properties
+	public Fallback getFallback() {
+		return endpoints != null && endpoints.getProperties() != null 
+			? endpoints.getProperties().getFallback() 
+			: null;
+	}
+
+	public Limits getLimits() {
+		return endpoints != null && endpoints.getProperties() != null 
+			? endpoints.getProperties().getLimits() 
+			: null;
+	}
+
+	public Redis getRedis() {
+		return endpoints != null ? endpoints.getRedis() : null;
 	}
 }

@@ -11,20 +11,40 @@ server:
   address: 0.0.0.0
   port: 8080
 
-rate-limiter:
-  properties:
-    fallback:
-      algorithm: TOKEN_BUCKET
-    redis:
-      ttl: 600000
-    limits:
-      defaultCapacity: 10
+rate-limit:
+  fallback:
+    algorithm: TOKEN_BUCKET
+    parameters:
+      capacity: 10
       refillRate: 1
-    security:
-      enabled: true
-      trusted-proxies:
-        - 127.0.0.1
-        - 10.0.0.0/8
-        - 172.16.0.0/12
-        - 192.168.0.0/16
-      log-suspicious: true
+  endpoints:
+    - /api/v1/resource1:
+      user-tiers:
+        free:
+          algorithm: TOKEN_BUCKET
+          parameters:
+            capacity: 10
+            refillRate: 1
+        premium:
+          algorithm: LEAKY_BUCKET
+          parameters:
+            capacity: 5
+            leakRate: 0.5
+    - /api/v1/resource2:
+      algorithm: TOKEN_BUCKET
+      parameters:
+        capacity: 20
+        refillRate: 2
+  redis:
+    ttl: 600000
+  security:
+    enabled: true
+    trusted-proxies:
+      - 127.0.0.1
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+    log-suspicious: true
+
+
+# What should be used if req to a particular endpoint is sent, where user doesn't have config for that endpoint. It should be default fallback algorithm or the algorithm for that particular endpoint. This is used to determine the algorithm to use if no specific configuration is found for the endpoint.
