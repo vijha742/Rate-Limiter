@@ -1,9 +1,10 @@
 spring:
   application:
     name: rate-limiter
-  redis:
-    host: redis
-    port: 6379
+  data:
+    redis:
+      host: redis
+      port: 6379
   cache:
     type: redis
 
@@ -15,22 +16,29 @@ rate-limit:
   fallback:
     algorithm: TOKEN_BUCKET
     parameters:
-      capacity: 10
+      capacity: 3
       refillRate: 1
   endpoints:
-    - /api/v1/resource1:
+    - path: /api/test
       user-tiers:
         free:
           algorithm: TOKEN_BUCKET
           parameters:
-            capacity: 10
-            refillRate: 1
+            capacity: 5
+            refillRate: 0
         premium:
           algorithm: LEAKY_BUCKET
           parameters:
             capacity: 5
-            leakRate: 0.5
-    - /api/v1/resource2:
+            leakRate: 1
+    - path: /api/test/v2
+      user-tiers:
+        free:
+          algorithm: LEAKY_BUCKET
+          parameters:
+            capacity: 10
+            flowRate: 1
+    - path: /api/config
       algorithm: TOKEN_BUCKET
       parameters:
         capacity: 20
