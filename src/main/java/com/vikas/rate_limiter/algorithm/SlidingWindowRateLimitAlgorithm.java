@@ -1,7 +1,6 @@
 package com.vikas.rate_limiter.algorithm;
 
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
-import com.vikas.rate_limiter.dto.RequestConfigDTO;
 import com.vikas.rate_limiter.utils.RateLimiterProperties;
 
 import lombok.Data;
@@ -13,6 +12,7 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Component
@@ -24,18 +24,17 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
     private final RateLimiterProperties properties;
 
     @Override
-    public synchronized List<Long> acceptRequest(String key) {
-        RequestConfigDTO config = configStore.getConfigWithIP(key);
-        int maxRequests = config.getParameters().get("maxRequests");
-        int windowTime = config.getParameters().get("windowTime");
-        List<Long> res =
-                template.execute(
-                        this.script,
-                        List.of(key),
-                        Integer.toString(windowTime),
-                        Integer.toString(maxRequests),
-                        Long.toString(System.currentTimeMillis()),
-                        Integer.toString(windowTime * 2));
+    public synchronized List<Long> acceptRequest(String key, Map<String, Integer> parameters) {
+        // RequestConfigDTO config = configStore.getConfigWithIP(key);
+        int maxRequests = parameters.get("maxRequests");
+        int windowTime = parameters.get("windowTime");
+        List<Long> res = template.execute(
+                this.script,
+                List.of(key),
+                Integer.toString(windowTime),
+                Integer.toString(maxRequests),
+                Long.toString(System.currentTimeMillis()),
+                Integer.toString(windowTime * 2));
         return res;
     }
 

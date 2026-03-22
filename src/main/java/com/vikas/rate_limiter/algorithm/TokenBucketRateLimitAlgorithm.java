@@ -1,7 +1,6 @@
 package com.vikas.rate_limiter.algorithm;
 
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
-import com.vikas.rate_limiter.dto.RequestConfigDTO;
 import com.vikas.rate_limiter.utils.RateLimiterProperties;
 
 import lombok.Data;
@@ -13,6 +12,7 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 // NOTE: Used @component so that it becomes a Singleton and is initialized at the
 // application
@@ -34,16 +34,17 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
     private final RateLimiterProperties props;
 
     @Override
-    public synchronized List<Long> acceptRequest(String key) {
-        RequestConfigDTO config = configStore.getConfigWithIP(key);
-        int capacity, refillRate, requested = 1;
-        if (config != null) {
-            capacity = config.getParameters().get("capacity");
-            refillRate = config.getParameters().get("refillRate");
+    public synchronized List<Long> acceptRequest(String key, Map<String, Integer> parameters) {
+        // RequestConfigDTO config = configStore.getConfigWithIP(key);
+        int capacity, requested = 1;
+        int refillRate;
+        if (parameters != null) {
+            capacity = parameters.get("capacity");
+            refillRate = parameters.get("refillRate");
             // HACK: Instead of this setup weighted endpoints and utilize those...
         } else {
-            capacity = props.getLimits().getDefaultCapacity();
-            refillRate = props.getLimits().getRefillRate();
+            capacity = (Integer) props.getFallback().getParameters().get("capacity");
+            refillRate = (Integer) props.getFallback().getParameters().get("refillRate");
         }
         List<Long> res =
                 template.execute(

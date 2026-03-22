@@ -9,7 +9,10 @@ import com.vikas.rate_limiter.config.ConfigurationStoreService;
 import com.vikas.rate_limiter.dto.RateLimitDecision;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
 import com.vikas.rate_limiter.dto.RequestConfigDTO.Algorithm;
+import com.vikas.rate_limiter.service.EndpointConfigService;
 import com.vikas.rate_limiter.utils.RateLimiterProperties;
+import com.vikas.rate_limiter.utils.RateLimiterProperties.EndpointConfig;
+import com.vikas.rate_limiter.utils.RateLimiterProperties.UserTierConfig;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import java.util.Map;
 @Component
 public class RateLimitManager {
 
+    private final EndpointConfigService endpointService;
     private final ConfigurationStoreService configStore;
     private final FixedCounterRateLimitAlgorithm fixedWindowAlgo;
     private final TokenBucketRateLimitAlgorithm tokenBucketAlgo;
@@ -39,30 +43,41 @@ public class RateLimitManager {
     // giving
     // errors, if intialized somewhere else...
 
-    public RateLimitDecision evaluateRequest(String ip) {
+    public RateLimitDecision evaluateRequest(String ip, String uri) {
         RateLimitDecision decision = new RateLimitDecision();
-        RequestConfigDTO reqConfig = configStore.getConfigWithIP(ip);
+        // RequestConfigDTO reqConfig =
+        // configStore.getConfigWithIPAndUri(ip, uri); // TODO: Replace this with DB
+        // method...
         RateLimitAlgorithm algo;
-        if (reqConfig != null) {
-            Map<String, Integer> parameters = reqConfig.getParameters();
-            Algorithm algorithm = reqConfig.getAlgo();
-            algo = findAlgorithm(algorithm);
-            List<Long> info = algo.acceptRequest(ip);
+        EndpointConfig reqConfig = endpointService.getEndpointConfig(uri);
+        UserTierConfig config =
+                reqConfig
+                        .getUserTiers()
+                        .get("free"); // TODO: Replace this with the actual user tier from the
+        // request...
+        if (config != null) {
+            algo = findAlgorithm(config.getAlgorithm());
+            Map<String, Integer> parameters = config.getParameters();
+            // if (reqConfig != null) {
+            // Map<String, Integer> parameters = reqConfig.getParameters();
+            // Algorithm algorithm = reqConfig.getAlgo();
+            // algo = findAlgorithm(algorithm);
+            List<Long> info = algo.acceptRequest(ip, parameters);
             if (info.get(0) == 1L) {
                 decision.setAllowed(true);
             } else {
                 decision.setAllowed(false);
             }
             int max = 0;
-            if (reqConfig.getAlgo() == Algorithm.TOKEN_BUCKET
-                    || reqConfig.getAlgo() == Algorithm.LEAKY_BUCKET) {
-                max = reqConfig.getParameters().get("capacity");
+            if (config.getAlgorithm() == Algorithm.TOKEN_BUCKET
+                    || config.getAlgorithm() == Algorithm.LEAKY_BUCKET) {
+                max = config.getParameters().get("capacity");
             } else {
-                max = reqConfig.getParameters().get("maxRequests");
+                max = config.getParameters().get("maxRequests");
             }
             decision.setLimit(max);
             decision.setRemaining(max - info.get(1).intValue());
-            if (reqConfig.getAlgo() == Algorithm.FIXED_WINDOW) {
+            if (config.getAlgorithm() == Algorithm.FIXED_WINDOW) {
                 decision.setResetOn(info.get(2));
 
             } else {
@@ -70,28 +85,32 @@ public class RateLimitManager {
             }
         } else {
             algo = findAlgorithm(this.props.getFallback().getAlgorithm());
-            List<Long> info = algo.acceptRequest(ip);
+            List<Long> info = algo.acceptRequest(ip, props.getFallback().getParameters());
             if (info.get(0) == 1L) {
                 decision.setAllowed(true);
             } else {
                 decision.setAllowed(false);
             }
-            int max = props.getLimits().getDefaultCapacity();
+            int max = (Integer) props.getFallback().getParameters().get("capacity");
             decision.setLimit(max);
             decision.setRemaining(max - info.get(1).intValue());
+            // TODO: Find the fix for the reset time for the fallback algorithm, as it is
+            // not being
+            // set properly
             decision.setResetOn(System.currentTimeMillis() + 1000);
         }
         return decision;
     }
 
     public RateLimitAlgorithm findAlgorithm(RequestConfigDTO.Algorithm algorithm) {
-        RateLimitAlgorithm algo = switch (algorithm) {
-            case Algorithm.TOKEN_BUCKET -> this.tokenBucketAlgo;
-            case Algorithm.FIXED_WINDOW -> this.fixedWindowAlgo;
-            case Algorithm.LEAKY_BUCKET -> this.leakyBucketAlgo;
-            case Algorithm.SLIDING_WINDOW -> this.slidingWindowAlgo;
-            default -> null;
-        };
+        RateLimitAlgorithm algo =
+                switch (algorithm) {
+                    case Algorithm.TOKEN_BUCKET -> this.tokenBucketAlgo;
+                    case Algorithm.FIXED_WINDOW -> this.fixedWindowAlgo;
+                    case Algorithm.LEAKY_BUCKET -> this.leakyBucketAlgo;
+                    case Algorithm.SLIDING_WINDOW -> this.slidingWindowAlgo;
+                    default -> null;
+                };
         return algo;
     }
 }

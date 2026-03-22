@@ -1,7 +1,6 @@
 package com.vikas.rate_limiter.algorithm;
 
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
-import com.vikas.rate_limiter.dto.RequestConfigDTO;
 
 import lombok.Data;
 
@@ -12,6 +11,7 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Data
 @Component
@@ -22,10 +22,10 @@ public class LeakyBucketRateLimitAlgorithm implements RateLimitAlgorithm {
     private final ConfigurationStoreService configStore;
 
     @Override
-    public synchronized List acceptRequest(String key) {
-        RequestConfigDTO config = configStore.getConfigWithIP(key);
-        int capacity = config.getParameters().get("capacity");
-        int flowRate = config.getParameters().get("flowRate");
+    public synchronized List<Long> acceptRequest(String key, Map<String, Integer> parameters) {
+        // RequestConfigDTO config = configStore.getConfigWithIP(key);
+        int capacity = parameters.get("capacity");
+        int flowRate = parameters.get("flowRate");
         List<Long> res =
                 template.execute(
                         this.script,

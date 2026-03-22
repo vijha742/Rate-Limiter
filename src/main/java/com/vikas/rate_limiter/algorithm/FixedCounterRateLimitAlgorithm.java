@@ -1,7 +1,6 @@
 package com.vikas.rate_limiter.algorithm;
 
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
-import com.vikas.rate_limiter.dto.RequestConfigDTO;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +12,7 @@ import org.springframework.data.redis.core.script.RedisScript;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Data
@@ -24,10 +24,10 @@ public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
     private final ConfigurationStoreService configStore;
 
     @Override
-    public synchronized List<Long> acceptRequest(String key) {
-        RequestConfigDTO config = configStore.getConfigWithIP(key);
-        int maxReq = config.getParameters().get("maxRequests");
-        int windowSize = config.getParameters().get("windowSize");
+    public synchronized List<Long> acceptRequest(String key, Map<String, Integer> parameters) {
+        // RequestConfigDTO config = configStore.getConfigWithIP(key);
+        int maxReq = parameters.get("maxRequests");
+        int windowSize = parameters.get("windowSize");
         List<Long> res = redisTemplate.execute(
                 this.script,
                 List.of(key),

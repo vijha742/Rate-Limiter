@@ -29,9 +29,10 @@ public class RateFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest req, HttpServletResponse res, FilterChain filterChain)
             throws ServletException, IOException {
+        // log.info("Received request for URI: {}", req.getRequestURI());
         String ip = ipUtility.getUserIp(req);
         log.info("Request recieved from IP {}", ip);
-        RateLimitDecision decision = manager.evaluateRequest(ip);
+        RateLimitDecision decision = manager.evaluateRequest(ip, req.getRequestURI());
         res.setHeader("X-RateLimit-Limit", String.valueOf(decision.getLimit()));
         res.setHeader("X-RateLimit-Remaining", String.valueOf(decision.getRemaining()));
         res.setHeader("X-RateLimit-ResetOn", String.valueOf(decision.getResetOn()));
