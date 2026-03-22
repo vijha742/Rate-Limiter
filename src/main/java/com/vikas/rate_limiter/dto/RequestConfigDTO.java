@@ -5,6 +5,8 @@ import jakarta.validation.constraints.Size;
 
 import lombok.Data;
 
+import org.springframework.http.HttpMethod;
+
 import java.util.Map;
 
 @Data
@@ -13,6 +15,10 @@ public class RequestConfigDTO {
 
     @NotNull(message = "Algorithm cannot be null")
     private Algorithm algo;
+
+    private String endpoint;
+
+    private HttpMethod method;
 
     @NotNull(message = "Parameters cannot be null")
     @Size(min = 1, message = "At least one parameter must be provided")

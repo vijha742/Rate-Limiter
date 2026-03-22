@@ -18,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Component
 public class ConfigurationStoreService {
 
-    private final ConcurrentHashMap<String, RequestConfigDTO> userConfigMap = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ConcurrentHashMap<String, RequestConfigDTO>> userConfigMap = new ConcurrentHashMap<>();
     private final IpUtil ipUtility;
     private final ConcurrentHashMap<String, RateLimitAlgorithm> userAlgoMap = new ConcurrentHashMap<>();
 
@@ -29,7 +29,10 @@ public class ConfigurationStoreService {
         if (req != null) {
             String ip = config.getIp() != null ? config.getIp() : ipUtility.getUserIp(req);
             if (ip != null && config != null) {
-                this.userConfigMap.put(ip, config);
+                String uri = config.getEndpoint() != null ? config.getEndpoint() : req.getRequestURI();
+                this.userConfigMap
+                        .computeIfAbsent(ip, k -> new ConcurrentHashMap<>())
+                        .put(uri, config);
                 log.info(
                         "Current status of algo_map after adding key-value pair {}",
                         this.userConfigMap);
@@ -43,12 +46,28 @@ public class ConfigurationStoreService {
             return false;
     }
 
+    public RequestConfigDTO getConfigWithIPAndUri(String ip, String uri) {
+        ConcurrentHashMap<String, RequestConfigDTO> uriMap = this.userConfigMap.get(ip);
+        if (uriMap != null) {
+            if (uriMap.containsKey(uri)) {
+                return (RequestConfigDTO) uriMap.get(uri);
+            } else
+                return null;
+        } else
+            return null;
+    }
+
     public RequestConfigDTO getConfigWithIP(String ip) {
         log.info("Current state of algo_map {}", this.userConfigMap);
         if (this.userConfigMap.containsKey(ip)) {
-            return this.userConfigMap.get(ip);
-        } else
-            return null;
+            ConcurrentHashMap<String, RequestConfigDTO> uriMap = this.userConfigMap.get(ip);
+            if (uriMap != null && !uriMap.isEmpty()) {
+                // Return the first config for this IP (you may want to implement a default URI
+                // strategy)
+                return uriMap.values().iterator().next();
+            }
+        }
+        return null;
         // } else {
         // RequestConfigDTO config = new RequestConfigDTO();
         // config.setAlgo(Algorithm.FIXED_WINDOW);

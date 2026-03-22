@@ -26,6 +26,11 @@ public class TestController {
         return "Hello Vikas Jha...!";
     }
 
+    @GetMapping("/test/v2")
+    public String getGreetings() {
+        return "Hello Hero...!";
+    }
+
     @PostMapping("/config")
     public boolean createConfig(
             @Valid @RequestBody RequestConfigDTO reqConfig, HttpServletRequest req) {
