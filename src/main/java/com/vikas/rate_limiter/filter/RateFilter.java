@@ -26,6 +26,14 @@ public class RateFilter extends OncePerRequestFilter {
     private final IpUtil ipUtility;
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        String path = request.getRequestURI();
+        return path.startsWith("/actuator")
+                || path.startsWith("/swagger")
+                || path.startsWith("/v3/api-docs");
+    }
+
+    @Override
     protected void doFilterInternal(
             HttpServletRequest req, HttpServletResponse res, FilterChain filterChain)
             throws ServletException, IOException {
