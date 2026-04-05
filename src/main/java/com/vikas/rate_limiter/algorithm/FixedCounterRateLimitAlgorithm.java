@@ -21,11 +21,13 @@ public class FixedCounterRateLimitAlgorithm implements RateLimitAlgorithm {
 
     private final StringRedisTemplate redisTemplate;
     private final RedisScript<List> script = getScript();
-    private final ConfigurationStoreService configStore;
+
+    public FixedCounterRateLimitAlgorithm(StringRedisTemplate redisTemplate) {
+        this.redisTemplate = redisTemplate;
+    }
 
     @Override
     public synchronized List<Long> acceptRequest(String key, Map<String, Integer> parameters) {
-        // RequestConfigDTO config = configStore.getConfigWithIP(key);
         int maxReq = parameters.get("maxRequests");
         int windowSize = parameters.get("windowSize");
         List<Long> res = redisTemplate.execute(

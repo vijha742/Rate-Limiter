@@ -20,12 +20,13 @@ public class SlidingWindowRateLimitAlgorithm implements RateLimitAlgorithm {
 
     private final StringRedisTemplate template;
     private final RedisScript<List> script = getScript();
-    private final ConfigurationStoreService configStore;
-    private final RateLimiterProperties properties;
+
+    public SlidingWindowRateLimitAlgorithm(StringRedisTemplate template) {
+        this.template = template;
+    }
 
     @Override
     public synchronized List<Long> acceptRequest(String key, Map<String, Integer> parameters) {
-        // RequestConfigDTO config = configStore.getConfigWithIP(key);
         int maxRequests = parameters.get("maxRequests");
         int windowTime = parameters.get("windowTime");
         List<Long> res = template.execute(
