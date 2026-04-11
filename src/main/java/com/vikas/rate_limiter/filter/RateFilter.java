@@ -29,7 +29,6 @@ public class RateFilter extends OncePerRequestFilter {
     protected void doFilterInternal(
             HttpServletRequest req, HttpServletResponse res, FilterChain filterChain)
             throws ServletException, IOException {
-        // log.info("Received request for URI: {}", req.getRequestURI());
         String ip = ipUtility.getUserIp(req);
         log.info("Request recieved from IP {}", ip);
         RateLimitDecision decision = manager.evaluateRequest(ip, req.getRequestURI());

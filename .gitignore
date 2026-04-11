@@ -1,4 +1,11 @@
 HELP.md
+DESIGN_DOCUMENT.md
+PRESENTATION.md
+SYNOPSIS.md
+Todos.md
+WEEKLY_PROGRESS_REPORTS.md
+YAML_CONFIGURATION.md
+synopsis.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/

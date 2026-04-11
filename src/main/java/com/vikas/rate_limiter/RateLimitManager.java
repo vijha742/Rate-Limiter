@@ -10,9 +10,8 @@ import com.vikas.rate_limiter.dto.RateLimitDecision;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
 import com.vikas.rate_limiter.dto.RequestConfigDTO.Algorithm;
 import com.vikas.rate_limiter.service.EndpointConfigService;
+import com.vikas.rate_limiter.service.MongoConfigurationStoreService;
 import com.vikas.rate_limiter.utils.RateLimiterProperties;
-import com.vikas.rate_limiter.utils.RateLimiterProperties.EndpointConfig;
-import com.vikas.rate_limiter.utils.RateLimiterProperties.UserTierConfig;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +28,7 @@ public class RateLimitManager {
 
     private final EndpointConfigService endpointService;
     private final ConfigurationStoreService configStore;
+    private final MongoConfigurationStoreService dbService;
     private final FixedCounterRateLimitAlgorithm fixedWindowAlgo;
     private final TokenBucketRateLimitAlgorithm tokenBucketAlgo;
     private final SlidingWindowRateLimitAlgorithm slidingWindowAlgo;
@@ -45,23 +45,13 @@ public class RateLimitManager {
 
     public RateLimitDecision evaluateRequest(String ip, String uri) {
         RateLimitDecision decision = new RateLimitDecision();
-        // RequestConfigDTO reqConfig =
-        // configStore.getConfigWithIPAndUri(ip, uri); // TODO: Replace this with DB
-        // method...
+        // TODO: Replace this with DB method...
         RateLimitAlgorithm algo;
-        EndpointConfig reqConfig = endpointService.getEndpointConfig(uri);
-        UserTierConfig config =
-                reqConfig
-                        .getUserTiers()
-                        .get("free"); // TODO: Replace this with the actual user tier from the
-        // request...
+        RateLimitConfigEntity config =
+                dbService.getUserConfigWithIpAndEndpointAndUserTier(ip, uri, "free");
         if (config != null) {
             algo = findAlgorithm(config.getAlgorithm());
             Map<String, Integer> parameters = config.getParameters();
-            // if (reqConfig != null) {
-            // Map<String, Integer> parameters = reqConfig.getParameters();
-            // Algorithm algorithm = reqConfig.getAlgo();
-            // algo = findAlgorithm(algorithm);
             List<Long> info = algo.acceptRequest(ip, parameters);
             if (info.get(0) == 1L) {
                 decision.setAllowed(true);
