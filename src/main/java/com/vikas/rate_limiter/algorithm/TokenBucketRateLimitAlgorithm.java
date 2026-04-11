@@ -30,21 +30,20 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
 
     private final StringRedisTemplate template;
     private final RedisScript<List> script = getScript();
-    private final ConfigurationStoreService configStore;
-    private final RateLimiterProperties props;
+
+    public TokenBucketRateLimitAlgorithm(StringRedisTemplate template) {
+        this.template = template;
+    }
 
     @Override
     public synchronized List<Long> acceptRequest(String key, Map<String, Integer> parameters) {
-        // RequestConfigDTO config = configStore.getConfigWithIP(key);
         int capacity, requested = 1;
         int refillRate;
         if (parameters != null) {
             capacity = parameters.get("capacity");
             refillRate = parameters.get("refillRate");
-            // HACK: Instead of this setup weighted endpoints and utilize those...
         } else {
-            capacity = (Integer) props.getFallback().getParameters().get("capacity");
-            refillRate = (Integer) props.getFallback().getParameters().get("refillRate");
+            throw new IllegalArgumentException("Parameters cannot be null");
         }
         List<Long> res =
                 template.execute(

@@ -54,5 +54,17 @@ rate-limit:
       - 192.168.0.0/16
     log-suspicious: true
 
+# Tell Micrometer to add this name as a tag to every single metric
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  endpoint:
+    health:
+      show-details: always
 
-# What should be used if req to a particular endpoint is sent, where user doesn't have config for that endpoint. It should be default fallback algorithm or the algorithm for that particular endpoint. This is used to determine the algorithm to use if no specific configuration is found for the endpoint.
+      # ASK: What should be used if req to a particular endpoint is sent, where user doesn't have config for that endpoint. It should be default fallback algorithm or the algorithm for that particular endpoint. This is used to determine the algorithm to use if no specific configuration is found for the endpoint.
