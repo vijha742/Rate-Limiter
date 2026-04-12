@@ -1,7 +1,9 @@
 package com.vikas.rate_limiter.controllers;
 
+import com.vikas.rate_limiter.RateLimitConfigEntity;
 import com.vikas.rate_limiter.config.ConfigurationStoreService;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
+import com.vikas.rate_limiter.service.MongoConfigurationStoreService;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -14,12 +16,15 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.LocalDateTime;
+
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api")
 public class TestController {
 
     private final ConfigurationStoreService configStore;
+    private final MongoConfigurationStoreService mongoConfigStore;
 
     @GetMapping("/test")
     public String getGreets() {
@@ -38,5 +43,15 @@ public class TestController {
         // @RequestBody..if needed multiple parameters from req
         // body, create a DTO
         return configStore.storeConfigWithIP(req, reqConfig);
+    }
+
+    @PostMapping("/config/v2")
+    public boolean createConfigV2(
+            @Valid @RequestBody RateLimitConfigEntity config, HttpServletRequest req) {
+        config.setCreatedAt(LocalDateTime.now());
+        config.setLastAccessedAt(LocalDateTime.now());
+        config.setAccessCount(1);
+        mongoConfigStore.saveConfig(config);
+        return true;
     }
 }

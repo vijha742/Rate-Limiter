@@ -21,11 +21,14 @@ import java.util.Map;
 @CompoundIndex(def = "{'ip': 1, 'endpoint': 1, 'userTier': 1}", name = "ip_endpoint_idx")
 public class RateLimitConfigEntity {
 
-    @Id private String id;
+    @Id
+    private String id;
 
-    @Indexed private String ip;
+    @Indexed
+    private String ip;
 
-    @Indexed private String endpoint;
+    @Indexed
+    private String endpoint;
 
     private String userTier;
 

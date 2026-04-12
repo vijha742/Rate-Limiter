@@ -47,8 +47,8 @@ public class RateLimitManager {
         RateLimitDecision decision = new RateLimitDecision();
         // TODO: Replace this with DB method...
         RateLimitAlgorithm algo;
-        RateLimitConfigEntity config =
-                dbService.getUserConfigWithIpAndEndpointAndUserTier(ip, uri, "free");
+        RateLimitConfigEntity config = dbService.getUserConfigWithIpAndEndpointAndUserTier(ip, uri, "free")
+                .orElse(null);
         if (config != null) {
             algo = findAlgorithm(config.getAlgorithm());
             Map<String, Integer> parameters = config.getParameters();
@@ -93,14 +93,13 @@ public class RateLimitManager {
     }
 
     public RateLimitAlgorithm findAlgorithm(RequestConfigDTO.Algorithm algorithm) {
-        RateLimitAlgorithm algo =
-                switch (algorithm) {
-                    case Algorithm.TOKEN_BUCKET -> this.tokenBucketAlgo;
-                    case Algorithm.FIXED_WINDOW -> this.fixedWindowAlgo;
-                    case Algorithm.LEAKY_BUCKET -> this.leakyBucketAlgo;
-                    case Algorithm.SLIDING_WINDOW -> this.slidingWindowAlgo;
-                    default -> null;
-                };
+        RateLimitAlgorithm algo = switch (algorithm) {
+            case Algorithm.TOKEN_BUCKET -> this.tokenBucketAlgo;
+            case Algorithm.FIXED_WINDOW -> this.fixedWindowAlgo;
+            case Algorithm.LEAKY_BUCKET -> this.leakyBucketAlgo;
+            case Algorithm.SLIDING_WINDOW -> this.slidingWindowAlgo;
+            default -> null;
+        };
         return algo;
     }
 }

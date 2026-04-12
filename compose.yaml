@@ -4,19 +4,6 @@ services:
     image: 'redis:latest'
     ports:
       - "6379:6379"
-  mongodb: # Does it need to have specific name like mongo or can it be anything? Why does it need so much config in comparison to redis?
-    image: 'mongo:latest'
-    ports: 
-      - "27017:27017"
-    volumes:
-      - mongodb_data:/data/db
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: admin
-      MONGO_INITDB_ROOT_PASSWORD: password
-    restart: unless-stopped
-volumes:
-  mongodb_data:
-    driver: local
     networks:
       - rate-limiter-network
 
@@ -56,6 +43,19 @@ volumes:
     networks:
       - rate-limiter-network
 
+  mongodb: # Does it need to have specific name like mongo or can it be anything? Why does it need so much config in comparison to redis?
+    image: 'mongo:latest'
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    restart: unless-stopped
+    networks:
+      - rate-limiter-network
+
 networks:
   rate-limiter-network:
     driver: bridge
@@ -64,3 +64,4 @@ networks:
 volumes:
   prometheus-data:
   grafana-data:
+  mongodb_data:

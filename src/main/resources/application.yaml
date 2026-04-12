@@ -1,4 +1,6 @@
 spring:
+  mongodb:
+    uri: mongodb://admin:password@localhost:27017/rate_limiter_db?authSource=admin
   application:
     name: rate-limiter
   data:

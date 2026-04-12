@@ -30,7 +30,8 @@ public class RateFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         return path.startsWith("/actuator")
                 || path.startsWith("/swagger")
-                || path.startsWith("/v3/api-docs");
+                || path.startsWith("/v3/api-docs")
+                || path.startsWith("/api/config/v2");
     }
 
     @Override
