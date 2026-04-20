@@ -16,6 +16,7 @@ import com.vikas.rate_limiter.utils.RateLimiterProperties;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -28,6 +29,7 @@ public class RateLimitManager {
 
     private final EndpointConfigService endpointService;
     private final ConfigurationStoreService configStore;
+    @Lazy
     private final MongoConfigurationStoreService dbService;
     private final FixedCounterRateLimitAlgorithm fixedWindowAlgo;
     private final TokenBucketRateLimitAlgorithm tokenBucketAlgo;
