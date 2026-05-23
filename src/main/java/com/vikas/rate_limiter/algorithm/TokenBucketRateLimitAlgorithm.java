@@ -1,8 +1,5 @@
 package com.vikas.rate_limiter.algorithm;
 
-import com.vikas.rate_limiter.config.ConfigurationStoreService;
-import com.vikas.rate_limiter.utils.RateLimiterProperties;
-
 import lombok.Data;
 
 import org.springframework.core.io.ClassPathResource;
@@ -45,15 +42,14 @@ public class TokenBucketRateLimitAlgorithm implements RateLimitAlgorithm {
         } else {
             throw new IllegalArgumentException("Parameters cannot be null");
         }
-        List<Long> res =
-                template.execute(
-                        script,
-                        List.of(key),
-                        Integer.toString(capacity),
-                        Integer.toString(refillRate),
-                        Long.toString(System.currentTimeMillis()),
-                        Integer.toString(requested),
-                        "600000");
+        List<Long> res = template.execute(
+                script,
+                List.of(key),
+                Integer.toString(capacity),
+                Integer.toString(refillRate),
+                Long.toString(System.currentTimeMillis()),
+                Integer.toString(requested),
+                "600000");
         return res;
     }
 
