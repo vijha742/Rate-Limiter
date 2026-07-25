@@ -49,6 +49,8 @@ public class RateLimiterProperties {
 
     public static class EndpointConfig {
         private String path;
+        private Algorithm algorithm;
+        private Map<String, Integer> parameters;
         private Map<String, UserTierConfig> userTiers;
 
         public String getPath() {
@@ -65,6 +67,22 @@ public class RateLimiterProperties {
 
         public void setUserTiers(Map<String, UserTierConfig> userTiers) {
             this.userTiers = userTiers;
+        }
+
+        public Algorithm getAlgorithm() {
+            return algorithm;
+        }
+
+        public void setAlgorithm(Algorithm algorithm) {
+            this.algorithm = algorithm;
+        }
+
+        public Map<String, Integer> getParameters() {
+            return parameters;
+        }
+
+        public void setParameters(Map<String, Integer> parameters) {
+            this.parameters = parameters;
         }
     }
 
@@ -111,8 +129,8 @@ public class RateLimiterProperties {
     }
 
     public static class Redis {
-        private long ttl;
-        private String keyPrefix;
+        private long ttl = 600000L;
+        private String keyPrefix = "rate-limit";
 
         public long getTtl() {
             return ttl;

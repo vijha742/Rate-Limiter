@@ -19,8 +19,7 @@ import java.util.Map;
 @ExtendWith(MockitoExtension.class)
 public class FixedCounterRateLimitAlgorithmTest {
 
-    @Mock
-    private StringRedisTemplate template;
+    @Mock private StringRedisTemplate template;
 
     private FixedCounterRateLimitAlgorithm algorithm;
 
@@ -41,11 +40,7 @@ public class FixedCounterRateLimitAlgorithmTest {
         String key = "user:192.168.1.1";
         Map<String, Integer> params = createParams(10, 60);
 
-        when(template.execute(
-                any(RedisScript.class),
-                anyList(),
-                anyString(),
-                anyString()))
+        when(template.execute(any(RedisScript.class), anyList(), anyString(), anyString()))
                 .thenReturn(List.of(1L, 1L));
 
         List<Long> result = algorithm.acceptRequest(key, params);
@@ -58,11 +53,7 @@ public class FixedCounterRateLimitAlgorithmTest {
         String key = "user:192.168.1.2";
         Map<String, Integer> params = createParams(5, 60);
 
-        when(template.execute(
-                any(RedisScript.class),
-                anyList(),
-                anyString(),
-                anyString()))
+        when(template.execute(any(RedisScript.class), anyList(), anyString(), anyString()))
                 .thenReturn(List.of(0L, 5L));
 
         List<Long> result = algorithm.acceptRequest(key, params);
@@ -75,11 +66,7 @@ public class FixedCounterRateLimitAlgorithmTest {
         String key = "user:192.168.1.3";
         Map<String, Integer> params = createParams(10, 60);
 
-        when(template.execute(
-                any(RedisScript.class),
-                anyList(),
-                anyString(),
-                anyString()))
+        when(template.execute(any(RedisScript.class), anyList(), anyString(), anyString()))
                 .thenReturn(List.of(1L, 0L));
 
         List<Long> result = algorithm.acceptRequest(key, params);
@@ -92,15 +79,8 @@ public class FixedCounterRateLimitAlgorithmTest {
         String key = "user:192.168.1.4";
         Map<String, Integer> params = createParams(10, 60);
 
-        when(template.execute(
-                any(RedisScript.class),
-                anyList(),
-                anyString(),
-                anyString()))
-                .thenReturn(
-                        List.of(1L, 1L),
-                        List.of(1L, 2L),
-                        List.of(1L, 3L));
+        when(template.execute(any(RedisScript.class), anyList(), anyString(), anyString()))
+                .thenReturn(List.of(1L, 1L), List.of(1L, 2L), List.of(1L, 3L));
 
         for (int i = 0; i < 3; i++) {
             List<Long> result = algorithm.acceptRequest(key, params);

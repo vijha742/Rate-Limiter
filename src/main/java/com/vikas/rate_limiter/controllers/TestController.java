@@ -5,6 +5,8 @@ import com.vikas.rate_limiter.config.ConfigurationStoreService;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
 import com.vikas.rate_limiter.service.MongoConfigurationStoreService;
 
+import io.micrometer.core.instrument.MeterRegistry;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
@@ -25,6 +27,7 @@ public class TestController {
 
     private final ConfigurationStoreService configStore;
     private final MongoConfigurationStoreService mongoConfigStore;
+    private final MeterRegistry registery;
 
     @GetMapping("/test")
     public String getGreets() {

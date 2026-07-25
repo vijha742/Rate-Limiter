@@ -1,12 +1,11 @@
 spring:
   mongodb:
-    uri: mongodb://admin:password@localhost:27017/rate_limiter_db?authSource=admin
+    uri: mongodb://admin:password@localhost:27017/rate_limiter_db?authSource=admin&retryWrites=true
   application:
     name: rate-limiter
-  data:
-    redis:
-      host: redis
-      port: 6379
+  redis:
+    host: redis
+    port: 6379
   cache:
     type: redis
 
@@ -18,21 +17,21 @@ rate-limit:
   fallback:
     algorithm: TOKEN_BUCKET
     parameters:
-      capacity: 3
-      refillRate: 1
+      capacity: 5000
+      refillRate: 200
   endpoints:
     - path: /api/test
       user-tiers:
         free:
           algorithm: TOKEN_BUCKET
           parameters:
-            capacity: 5
-            refillRate: 0
+            capacity: 5000
+            refillRate: 200
         premium:
           algorithm: LEAKY_BUCKET
           parameters:
             capacity: 5
-            leakRate: 1
+            flowRate: 1
     - path: /api/test/v2
       user-tiers:
         free:
@@ -59,8 +58,16 @@ rate-limit:
 # Tell Micrometer to add this name as a tag to every single metric
 management:
   metrics:
+    distribution:
+      percentiles-histogram:
+        http:
+          server:
+            requests: true
     tags:
       application: ${spring.application.name}
+    export:
+      prometheus:
+        enabled: true
   endpoints:
     web:
       exposure:
@@ -68,5 +75,7 @@ management:
   endpoint:
     health:
       show-details: always
+    prometheus:
+      enabled: true
 
       # ASK: What should be used if req to a particular endpoint is sent, where user doesn't have config for that endpoint. It should be default fallback algorithm or the algorithm for that particular endpoint. This is used to determine the algorithm to use if no specific configuration is found for the endpoint.

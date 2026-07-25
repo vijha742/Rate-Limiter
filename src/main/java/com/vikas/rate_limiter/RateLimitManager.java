@@ -10,13 +10,11 @@ import com.vikas.rate_limiter.dto.RateLimitDecision;
 import com.vikas.rate_limiter.dto.RequestConfigDTO;
 import com.vikas.rate_limiter.dto.RequestConfigDTO.Algorithm;
 import com.vikas.rate_limiter.service.EndpointConfigService;
-import com.vikas.rate_limiter.service.MongoConfigurationStoreService;
 import com.vikas.rate_limiter.utils.RateLimiterProperties;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -29,8 +27,6 @@ public class RateLimitManager {
 
     private final EndpointConfigService endpointService;
     private final ConfigurationStoreService configStore;
-    @Lazy
-    private final MongoConfigurationStoreService dbService;
     private final FixedCounterRateLimitAlgorithm fixedWindowAlgo;
     private final TokenBucketRateLimitAlgorithm tokenBucketAlgo;
     private final SlidingWindowRateLimitAlgorithm slidingWindowAlgo;
@@ -49,12 +45,13 @@ public class RateLimitManager {
         RateLimitDecision decision = new RateLimitDecision();
         // TODO: Replace this with DB method...
         RateLimitAlgorithm algo;
-        RateLimitConfigEntity config = dbService.getUserConfigWithIpAndEndpointAndUserTier(ip, uri, "free")
-                .orElse(null);
+        // TODO: Add in-memory store for frequently used Configs...
+        RateLimitConfigEntity config =
+                configStore.getUserConfigWithIpAndEndpointAndUserTier(ip, uri, "free").orElseNull();
         if (config != null) {
             algo = findAlgorithm(config.getAlgorithm());
             Map<String, Integer> parameters = config.getParameters();
-            List<Long> info = algo.acceptRequest(ip, parameters);
+            List<Long> info = algo.acceptRequest(buildKey(ip, uri), parameters);
             if (info.get(0) == 1L) {
                 decision.setAllowed(true);
             } else {
@@ -68,40 +65,90 @@ public class RateLimitManager {
                 max = config.getParameters().get("maxRequests");
             }
             decision.setLimit(max);
-            decision.setRemaining(max - info.get(1).intValue());
-            if (config.getAlgorithm() == Algorithm.FIXED_WINDOW) {
-                decision.setResetOn(info.get(2));
-
-            } else {
-                decision.setResetOn(System.currentTimeMillis() + 1000);
-            }
+            decision.setRemaining(computeRemaining(config.getAlgorithm(), max, info));
+            decision.setResetOn(computeResetOn(config.getAlgorithm(), info));
         } else {
             algo = findAlgorithm(this.props.getFallback().getAlgorithm());
-            List<Long> info = algo.acceptRequest(ip, props.getFallback().getParameters());
+            List<Long> info =
+                    algo.acceptRequest(buildKey(ip, uri), props.getFallback().getParameters());
             if (info.get(0) == 1L) {
                 decision.setAllowed(true);
             } else {
                 decision.setAllowed(false);
             }
-            int max = (Integer) props.getFallback().getParameters().get("capacity");
+            int max =
+                    getLimitFromParameters(
+                            props.getFallback().getAlgorithm(),
+                            props.getFallback().getParameters());
             decision.setLimit(max);
-            decision.setRemaining(max - info.get(1).intValue());
-            // TODO: Find the fix for the reset time for the fallback algorithm, as it is
-            // not being
-            // set properly
-            decision.setResetOn(System.currentTimeMillis() + 1000);
+            decision.setRemaining(computeRemaining(props.getFallback().getAlgorithm(), max, info));
+            decision.setResetOn(computeResetOn(props.getFallback().getAlgorithm(), info));
         }
         return decision;
     }
 
+    private String buildKey(String ip, String uri) {
+        String prefix = "rate-limit";
+        if (props != null
+                && props.getRedis() != null
+                && props.getRedis().getKeyPrefix() != null
+                && !props.getRedis().getKeyPrefix().isBlank()) {
+            prefix = props.getRedis().getKeyPrefix();
+        }
+        return String.format("%s:%s:%s", prefix, ip, uri);
+    }
+
+    private int getLimitFromParameters(Algorithm algorithm, Map<String, Integer> parameters) {
+        if (parameters == null) {
+            return 0;
+        }
+        if (algorithm == Algorithm.TOKEN_BUCKET || algorithm == Algorithm.LEAKY_BUCKET) {
+            return parameters.getOrDefault("capacity", 0);
+        }
+        return parameters.getOrDefault("maxRequests", 0);
+    }
+
+    private int computeRemaining(Algorithm algorithm, int limit, List<Long> info) {
+        if (info == null || info.size() < 2) {
+            return 0;
+        }
+        long value = info.get(1) == null ? 0L : info.get(1);
+        if (algorithm == Algorithm.FIXED_WINDOW) {
+            return Math.max(0, limit - (int) value);
+        }
+        if (algorithm == Algorithm.SLIDING_WINDOW) {
+            return Math.max(0, limit - (int) value);
+        }
+        return Math.max(0, (int) value);
+    }
+
+    private long computeResetOn(Algorithm algorithm, List<Long> info) {
+        if (algorithm == Algorithm.FIXED_WINDOW && info != null && info.size() >= 3) {
+            long ttlSeconds = info.get(2) == null ? 0L : info.get(2);
+            return System.currentTimeMillis() + (ttlSeconds * 1000);
+        }
+        if (algorithm == Algorithm.SLIDING_WINDOW && info != null && info.size() >= 3) {
+            long windowMs = info.get(2) == null ? 0L : info.get(2);
+            return System.currentTimeMillis() + windowMs;
+        }
+        if ((algorithm == Algorithm.TOKEN_BUCKET || algorithm == Algorithm.LEAKY_BUCKET)
+                && info != null
+                && info.size() >= 3) {
+            long ttlMs = info.get(2) == null ? 0L : info.get(2);
+            return System.currentTimeMillis() + ttlMs;
+        }
+        return System.currentTimeMillis();
+    }
+
     public RateLimitAlgorithm findAlgorithm(RequestConfigDTO.Algorithm algorithm) {
-        RateLimitAlgorithm algo = switch (algorithm) {
-            case Algorithm.TOKEN_BUCKET -> this.tokenBucketAlgo;
-            case Algorithm.FIXED_WINDOW -> this.fixedWindowAlgo;
-            case Algorithm.LEAKY_BUCKET -> this.leakyBucketAlgo;
-            case Algorithm.SLIDING_WINDOW -> this.slidingWindowAlgo;
-            default -> null;
-        };
+        RateLimitAlgorithm algo =
+                switch (algorithm) {
+                    case Algorithm.TOKEN_BUCKET -> this.tokenBucketAlgo;
+                    case Algorithm.FIXED_WINDOW -> this.fixedWindowAlgo;
+                    case Algorithm.LEAKY_BUCKET -> this.leakyBucketAlgo;
+                    case Algorithm.SLIDING_WINDOW -> this.slidingWindowAlgo;
+                    default -> null;
+                };
         return algo;
     }
 }
